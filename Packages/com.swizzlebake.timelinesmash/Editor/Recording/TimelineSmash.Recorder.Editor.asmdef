@@ -1,0 +1,28 @@
+{
+    "name": "TimelineSmash.Recorder.Editor",
+    "rootNamespace": "TimelineSmash.Editor.Recording",
+    "references": [
+        "TimelineSmash.Runtime",
+        "TimelineSmash.Editor",
+        "Unity.Recorder.Editor"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [
+        "TIMELINESMASH_RECORDER"
+    ],
+    "versionDefines": [
+        {
+            "name": "com.unity.recorder",
+            "expression": "",
+            "define": "TIMELINESMASH_RECORDER"
+        }
+    ],
+    "noEngineReferences": false
+}

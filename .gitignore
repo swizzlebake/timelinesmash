@@ -70,3 +70,9 @@ crashlytics-build.properties
 # Temporary auto-generated Android Assets
 /[Aa]ssets/[Ss]treamingAssets/aa.meta
 /[Aa]ssets/[Ss]treamingAssets/aa/*
+
+# TimelineSmash regenerable assemble artifacts (master timeline + stage scene are
+# always rebuilt from the committed contributor/composition assets — never hand-merged)
+/[Aa]ssets/Cinematics/Generated/
+# TimelineSmash automated-test scratch assets
+/[Aa]ssets/__TimelineSmashTests__/
