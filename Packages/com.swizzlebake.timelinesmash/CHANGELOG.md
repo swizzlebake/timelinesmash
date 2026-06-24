@@ -4,6 +4,25 @@ All notable changes to this package are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.0] - 2026-06-24
+
+### Changed
+- **High-resolution recording.** The optional Recorder export now writes a **PNG/EXR image sequence** from
+  a chosen camera via `CameraInputSettings` at an **arbitrary resolution** (`CaptureSettings.width/height`,
+  e.g. 4K/8K), instead of an H.264 movie — removing the built-in encoder's ~4K ceiling. PNG captures
+  tonemapped sRGB (ready to encode); EXR captures linear HDR (for grading). Driven over a fixed frame
+  range (`SetRecordModeToFrameInterval` + `CapFrameRate`). ProRes is macOS/Windows only, so the cross-
+  platform high-res path is image sequences.
+
+### Added
+- `CaptureSettings` (width, height, format, supersample, camera tag) on `CinematicComposition.capture`.
+
+### Notes
+- Recorder capture is interactive (enter Play Mode to capture; it auto-stops at the last frame) and
+  requires the capture camera to be present in the open scene(s). A custom, dependency-free capture
+  pipeline (play-mode frame-stepping → image sequence → ffmpeg video) is planned to make this fully
+  turnkey.
+
 ## [0.3.0] - 2026-06-24
 
 ### Added

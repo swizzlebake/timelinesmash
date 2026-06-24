@@ -9,10 +9,12 @@ using UnityEngine;
 namespace TimelineSmash.Editor.Recording
 {
     /// <summary>
-    /// Optional export path, compiled only when com.unity.recorder is installed. Registers itself
-    /// with <see cref="RecorderBridge"/> on load so the composition inspector's Record button lights
-    /// up. Arms a movie recorder (GameView + audio) against the stage scene; the user enters Play
-    /// Mode to capture. Kept intentionally light per the MVP.
+    /// Optional export path, compiled only when com.unity.recorder is installed. Registers itself with
+    /// <see cref="RecorderBridge"/> so the composition inspector's Record button lights up. Outputs a
+    /// HIGH-RESOLUTION image sequence (PNG/EXR) by rendering a chosen camera through
+    /// <c>CameraInputSettings</c> at an arbitrary resolution — it is NOT limited to the Game View or the
+    /// built-in H.264 ~4K ceiling. Enter Play Mode to capture; recording auto-stops at the last frame.
+    /// (ProRes is macOS/Windows only, so on Linux the high-res path is image sequences.)
     /// </summary>
     [InitializeOnLoad]
     public static class CinematicRecorder
@@ -40,25 +42,56 @@ namespace TimelineSmash.Editor.Recording
             float fps = (float)(composition != null && composition.settings != null && composition.settings.frameRate > 0
                 ? composition.settings.frameRate
                 : 30.0);
+            var capture = composition != null && composition.capture != null ? composition.capture : new CaptureSettings();
+            int frames = duration > 0 ? Mathf.Max(1, Mathf.CeilToInt((float)duration * fps)) : 0;
+
+            bool exr = capture.format == CaptureImageFormat.EXR;
+
+            var img = ScriptableObject.CreateInstance<ImageRecorderSettings>();
+            img.name = name;
+            img.Enabled = true;
+            img.OutputFormat = exr
+                ? ImageRecorderSettings.ImageRecorderOutputFormat.EXR
+                : ImageRecorderSettings.ImageRecorderOutputFormat.PNG;
+            img.OutputColorSpace = exr
+                ? ImageRecorderSettings.ColorSpaceType.Unclamped_linear_sRGB  // linear HDR for grading
+                : ImageRecorderSettings.ColorSpaceType.sRGB_sRGB;             // tonemapped, ready to encode
+            if (exr)
+                img.EXRCompression = CompressionUtility.EXRCompressionType.Zip;
+            img.CaptureAlpha = false;
+
+            string tag = capture.cameraTag;
+            img.imageInputSettings = new CameraInputSettings
+            {
+                Source = string.IsNullOrEmpty(tag) ? ImageSource.ActiveCamera
+                    : tag == "MainCamera" ? ImageSource.MainCamera
+                    : ImageSource.TaggedCamera,
+                CameraTag = tag,
+                OutputWidth = Mathf.Max(2, capture.width),
+                OutputHeight = Mathf.Max(2, capture.height),
+                RecordTransparency = false,
+                FlipFinalOutput = false,
+            };
+            img.OutputFile = $"Recordings/{name}/{name}";
 
             var settings = ScriptableObject.CreateInstance<RecorderControllerSettings>();
             settings.FrameRate = fps;
-            settings.SetRecordModeToManual();
-
-            var movie = ScriptableObject.CreateInstance<MovieRecorderSettings>();
-            movie.name = name;
-            movie.Enabled = true;
-            movie.ImageInputSettings = new GameViewInputSettings();
-            movie.AudioInputSettings.PreserveAudio = true;
-            movie.OutputFile = Path.Combine("Recordings", name);
-            settings.AddRecorderSettings(movie);
+            settings.CapFrameRate = true;
+            if (frames > 0)
+                settings.SetRecordModeToFrameInterval(0, frames - 1);
+            else
+                settings.SetRecordModeToManual();
+            settings.AddRecorderSettings(img);
 
             var controller = new RecorderController(settings);
             controller.PrepareRecording();
             controller.StartRecording();
 
-            Debug.Log($"[TimelineSmash] Recorder armed for '{name}' (→ Recordings/{name}, {fps} fps). " +
-                      "Enter Play Mode to capture the stage; recording stops on exit Play Mode.");
+            string ext = exr ? "EXR" : "PNG";
+            string range = frames > 0 ? $"{frames} frames (auto-stops)" : "until you Stop (manual)";
+            Debug.Log($"[TimelineSmash] Recorder armed for '{name}': {capture.width}x{capture.height} {ext} " +
+                      $"sequence → Recordings/{name}/ at {fps} fps, {range}. Enter Play Mode to capture — " +
+                      "ensure the capture camera is present in the open scene(s).");
         }
     }
 }

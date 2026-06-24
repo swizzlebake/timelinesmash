@@ -95,6 +95,15 @@ includes in order); duplicates are ignored and reported. The compiled lookup is 
 `<Name>_Bindings.asset` (gitignored) for inspection. Use the **Compile preview** button on a manifest
 to check the key count and any conflicts.
 
+### High-resolution recording (0.4.0+)
+
+With `com.unity.recorder` installed, **Record** writes a **PNG/EXR image sequence** from a chosen camera
+at any resolution (`CaptureSettings.width/height` on the composition — 4K, 8K, …), not the Game-View
+size. This sidesteps the built-in H.264 encoder's ~4K ceiling (the limit was the *encoder*, not the
+capture). PNG = tonemapped sRGB (ready to encode); EXR = linear HDR (for grading). Enter Play Mode to
+capture; it auto-stops at the last frame. Ensure the capture camera (default tag `MainCamera`) is present
+in the open scene. *(ProRes is macOS/Windows only — image sequences are the cross-platform high-res path.)*
+
 ## Development
 
 This repository is itself a Unity project that embeds the package under

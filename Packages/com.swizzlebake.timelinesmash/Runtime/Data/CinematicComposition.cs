@@ -25,6 +25,9 @@ namespace TimelineSmash
 
         public AssembleSettings settings = new AssembleSettings();
 
+        [Tooltip("High-resolution capture settings used by Record (image sequence).")]
+        public CaptureSettings capture = new CaptureSettings();
+
         [Tooltip("Project-relative folder where the regenerable master timeline and stage scene " +
                  "are written. This folder is meant to be gitignored.")]
         public string outputFolder = "Assets/Cinematics/Generated";

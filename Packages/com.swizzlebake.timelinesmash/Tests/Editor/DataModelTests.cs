@@ -67,6 +67,7 @@ namespace TimelineSmash.Tests
             {
                 Assert.IsNotNull(comp.contributors);
                 Assert.IsNotNull(comp.settings);
+                Assert.IsNotNull(comp.capture);
                 Assert.AreEqual(30, comp.settings.frameRate);
                 Assert.AreEqual("Assets/Cinematics/Generated", comp.outputFolder);
             }
@@ -74,6 +75,17 @@ namespace TimelineSmash.Tests
             {
                 Object.DestroyImmediate(comp);
             }
+        }
+
+        [Test]
+        public void CaptureSettings_Defaults()
+        {
+            var c = new CaptureSettings();
+            Assert.AreEqual(3840, c.width);
+            Assert.AreEqual(2160, c.height);
+            Assert.AreEqual(CaptureImageFormat.PNG, c.format);
+            Assert.AreEqual(1, c.supersample);
+            Assert.AreEqual("MainCamera", c.cameraTag);
         }
     }
 }
