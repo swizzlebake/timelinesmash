@@ -90,5 +90,92 @@ namespace TimelineSmash.Tests
             AssetDatabase.SaveAssets();
             return comp;
         }
+
+        // --- Rich content helpers (keyframed motion + assorted track types) -----------------------
+        // The base CreateSubTimeline gives a bare, empty AnimationTrack. These build sub-timelines with
+        // actual content so the assemble → bind → evaluate pipeline can be exercised end to end.
+
+        /// <summary>Author an in-memory AnimationClip that slides along +X and spins about +Y over its
+        /// duration, and add it to <paramref name="track"/> as a TimelineClip. The clip drives the bound
+        /// Animator's own transform (path ""), using Timeline's canonical curve bindings
+        /// (<c>m_LocalPosition.*</c> / <c>localEulerAnglesRaw.*</c>).
+        /// The clip is intentionally NOT written to disk: any AssetDatabase write to the .playable mid-build
+        /// (AddObjectToAsset, or a separate CreateAsset) reimports it and fake-nulls the in-memory
+        /// TimelineAsset, leaving GetOutputTracks empty. Tests evaluate the live instance, so persisted
+        /// curves aren't needed.</summary>
+        public static AnimationClip AddTransformClip(
+            AnimationTrack track, double start, double duration, float slideX = 3f, float spinY = 90f)
+        {
+            float d = (float)duration;
+            var clip = new AnimationClip { name = "Move" };
+
+            AnimationUtility.SetEditorCurve(clip,
+                EditorCurveBinding.FloatCurve("", typeof(Transform), "m_LocalPosition.x"),
+                AnimationCurve.Linear(0f, 0f, d, slideX));
+            AnimationUtility.SetEditorCurve(clip,
+                EditorCurveBinding.FloatCurve("", typeof(Transform), "m_LocalPosition.y"),
+                AnimationCurve.Constant(0f, d, 0f));
+            AnimationUtility.SetEditorCurve(clip,
+                EditorCurveBinding.FloatCurve("", typeof(Transform), "m_LocalPosition.z"),
+                AnimationCurve.Constant(0f, d, 0f));
+
+            AnimationUtility.SetEditorCurve(clip,
+                EditorCurveBinding.FloatCurve("", typeof(Transform), "localEulerAnglesRaw.x"),
+                AnimationCurve.Constant(0f, d, 0f));
+            AnimationUtility.SetEditorCurve(clip,
+                EditorCurveBinding.FloatCurve("", typeof(Transform), "localEulerAnglesRaw.y"),
+                AnimationCurve.Linear(0f, 0f, d, spinY));
+            AnimationUtility.SetEditorCurve(clip,
+                EditorCurveBinding.FloatCurve("", typeof(Transform), "localEulerAnglesRaw.z"),
+                AnimationCurve.Constant(0f, d, 0f));
+
+            var tc = track.CreateClip(clip);
+            tc.start = start;
+            tc.duration = duration;
+
+            return clip;
+        }
+
+        /// <summary>A sub-timeline with one AnimationTrack carrying a real translate+rotate clip.</summary>
+        public static TimelineAsset CreateAnimatedSubTimeline(string assetName, string trackName = "Body")
+        {
+            EnsureRoot();
+            var timeline = ScriptableObject.CreateInstance<TimelineAsset>();
+            AssetDatabase.CreateAsset(timeline, $"{Root}/{assetName}.playable");
+            var track = timeline.CreateTrack<AnimationTrack>(null, trackName);
+            AddTransformClip(track, 0, 1);
+            EditorUtility.SetDirty(timeline);
+            AssetDatabase.SaveAssets();
+            return timeline;
+        }
+
+        /// <summary>A sub-timeline mixing three differently-bound track types in one asset:
+        /// an AnimationTrack (→Animator), an AudioTrack (→AudioSource), and an ActivationTrack (→GameObject).
+        /// This is what exposes the all-or-nothing <c>bindingKey</c> override.</summary>
+        public static TimelineAsset CreateMultiTrackSubTimeline(
+            string assetName, string animName = "Body", string audioName = "Voice", string activationName = "Prop")
+        {
+            EnsureRoot();
+            var timeline = ScriptableObject.CreateInstance<TimelineAsset>();
+            AssetDatabase.CreateAsset(timeline, $"{Root}/{assetName}.playable");
+
+            var anim = timeline.CreateTrack<AnimationTrack>(null, animName);
+            AddTransformClip(anim, 0, 1);
+
+            var audio = timeline.CreateTrack<AudioTrack>(null, audioName);
+            var beep = AudioClip.Create("Beep", 44100, 1, 44100, false);
+            var audioClip = audio.CreateClip(beep);
+            audioClip.start = 0;
+            audioClip.duration = 1;
+
+            var activation = timeline.CreateTrack<ActivationTrack>(null, activationName);
+            var actClip = activation.CreateDefaultClip();
+            actClip.start = 0;
+            actClip.duration = 1;
+
+            EditorUtility.SetDirty(timeline);
+            AssetDatabase.SaveAssets();
+            return timeline;
+        }
     }
 }

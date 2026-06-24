@@ -4,6 +4,32 @@ All notable changes to this package are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.0] - 2026-06-24
+
+### Added
+- **Per-track binding overrides.** A segment's `bindingKey` override now resolves **`"<bindingKey>/<trackName>"`
+  first**, then falls back to the bare `"<bindingKey>"`. A multi-track sub-timeline reused by two segments
+  can finally retarget its tracks individually (`alice/Body`, `alice/Voice`, `bob/Body`, …); a bare key still
+  binds the whole sub-timeline, so existing manifests are unaffected.
+- **Nested ControlTrack wiring.** A `ControlTrack` placed *inside* a sub-timeline is no longer dead: for each
+  control clip `BindingApplier` resolves its manifest target to a GameObject and sets the clip's exposed
+  source reference on the host director (previously only the master's control tracks were wired).
+- **Assemble into the active scene.** `CinematicAssembleService.AssembleIntoActiveScene` (menu: **Assets ▸
+  TimelineSmash ▸ Assemble Into Active Scene**) wires the master + host directors into the currently open
+  scene instead of regenerating an empty stage, so bindings resolve against the actors already in the scene.
+  It is idempotent (re-running replaces the master it added) and never destroys the user's actors.
+- **Bind by scene-object name.** When assembling into a live scene, a binding key the manifest does not
+  resolve falls back to a scene GameObject of that name, selecting the component the track binds to — so a
+  committed manifest can target live actors without serializing scene references. Opt-in via
+  `StageSceneBuilder.Populate(..., resolveBySceneName: true)`.
+- Tests: per-track vs whole-sub override, nested-control wiring, idempotent active-scene assembly,
+  bind-by-name resolution, plus an elaborate multi-track playback-evaluation suite (Animation translate +
+  rotate proven by host evaluation, Audio/Activation/Signal/Control track types).
+
+### Changed
+- `BindingApplier.Apply` and `StageSceneBuilder.Populate` take an optional `resolveBySceneName` flag
+  (default `false`, preserving prior behaviour).
+
 ## [0.4.0] - 2026-06-24
 
 ### Changed

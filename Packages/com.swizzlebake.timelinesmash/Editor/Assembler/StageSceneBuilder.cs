@@ -36,13 +36,27 @@ namespace TimelineSmash.Editor
             return build;
         }
 
+        const string MasterRootName = "Cinematic_Master";
+
         /// <summary>Populate an existing scene with the master + host directors (no file I/O).
-        /// Used by <see cref="BuildStage"/> and directly by tests against an additive scene.</summary>
-        public static StageBuildResult Populate(Scene scene, AssembleResult result, CompiledBindings bindings)
+        /// Used by <see cref="BuildStage"/>, and directly when assembling into a live, actor-populated
+        /// scene. Any previous master root is removed first, so re-assembling never stacks duplicates.
+        /// When <paramref name="resolveBySceneName"/> is set, binding keys the manifest does not resolve
+        /// fall back to scene GameObjects of that name (see <see cref="BindingApplier"/>).</summary>
+        public static StageBuildResult Populate(Scene scene, AssembleResult result, CompiledBindings bindings,
+            bool resolveBySceneName = false)
         {
+            // Idempotency: drop a master left by a previous assemble into this same scene.
+            if (scene.IsValid())
+            {
+                foreach (var root in scene.GetRootGameObjects())
+                    if (root.name == MasterRootName)
+                        Object.DestroyImmediate(root);
+            }
+
             var build = new StageBuildResult();
 
-            var masterGO = new GameObject("Cinematic_Master");
+            var masterGO = new GameObject(MasterRootName);
             if (scene.IsValid())
                 SceneManager.MoveGameObjectToScene(masterGO, scene);
 
@@ -68,7 +82,7 @@ namespace TimelineSmash.Editor
                 masterDir.SetReferenceValue(entry.exposedName, hostGO);
 
                 // Bindings resolve on the host director (where the nested timeline plays).
-                BindingApplier.Apply(hostDir, entry.segment, bindings, result.warnings);
+                BindingApplier.Apply(hostDir, entry.segment, bindings, result.warnings, resolveBySceneName);
             }
 
             return build;

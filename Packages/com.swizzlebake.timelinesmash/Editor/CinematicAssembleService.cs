@@ -1,5 +1,6 @@
 using System.IO;
 using UnityEditor.SceneManagement;
+using UnityEngine.SceneManagement;
 
 namespace TimelineSmash.Editor
 {
@@ -51,6 +52,29 @@ namespace TimelineSmash.Editor
 
                 StageSceneBuilder.BuildStage(result, compiled, StagePath(composition));
             }
+
+            return result;
+        }
+
+        /// <summary>Build the master and wire the cinematic into the <b>currently open scene</b>, instead of
+        /// regenerating an empty stage. The host directors + bindings land alongside whatever actors the
+        /// scene already holds; manifest keys the manifest does not resolve fall back to scene GameObjects
+        /// of that name, so a committed manifest can target live actors. Idempotent — re-running replaces
+        /// the master it added rather than stacking a second one. The scene is left dirty for the user to
+        /// save; their actors are never destroyed.</summary>
+        public static AssembleResult AssembleIntoActiveScene(CinematicComposition composition)
+        {
+            if (composition == null)
+                return null;
+
+            var result = CinematicAssembler.BuildMaster(composition, MasterPath(composition));
+
+            var compiled = BindingCompiler.Compile(composition.bindingManifest, result.warnings);
+            BindingCompiler.WriteAsset(compiled, BindingsPath(composition));
+
+            var scene = SceneManager.GetActiveScene();
+            StageSceneBuilder.Populate(scene, result, compiled, resolveBySceneName: true);
+            EditorSceneManager.MarkSceneDirty(scene);
 
             return result;
         }

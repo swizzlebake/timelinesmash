@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Playables;
+using UnityEngine.SceneManagement;
 using UnityEngine.Timeline;
 
 namespace TimelineSmash.Editor
@@ -13,9 +14,21 @@ namespace TimelineSmash.Editor
     public static class BindingApplier
     {
         /// <summary>Bind every output track of the segment's sub-timeline on <paramref name="hostDir"/>.
-        /// The key is <c>segment.bindingKey</c> when set, otherwise the track's own name. Returns the
-        /// number of tracks successfully bound; unresolved keys are appended to <paramref name="warnings"/>.</summary>
-        public static int Apply(PlayableDirector hostDir, SubTimelineSegment segment, CompiledBindings bindings, List<string> warnings)
+        /// Key resolution per track:
+        /// <list type="bullet">
+        /// <item>with a <c>segment.bindingKey</c> override: <c>"&lt;bindingKey&gt;/&lt;trackName&gt;"</c>
+        /// first (so one sub-timeline can retarget its tracks individually), then the bare
+        /// <c>"&lt;bindingKey&gt;"</c> (a whole-sub override, backwards compatible);</item>
+        /// <item>otherwise the track's own name.</item>
+        /// </list>
+        /// A nested <see cref="ControlTrack"/> has no generic binding; its clips are wired through the host
+        /// director's exposed references instead. When <paramref name="resolveBySceneName"/> is set, a key
+        /// that the manifest does not resolve falls back to a GameObject of that name in the host's scene
+        /// (picking the component the track binds to) — this lets a committed manifest target live actors
+        /// by name when assembling into a populated scene. Returns the number of tracks bound; unresolved
+        /// keys are appended to <paramref name="warnings"/>.</summary>
+        public static int Apply(PlayableDirector hostDir, SubTimelineSegment segment, CompiledBindings bindings,
+            List<string> warnings, bool resolveBySceneName = false)
         {
             if (hostDir == null || segment == null)
                 return 0;
@@ -25,15 +38,28 @@ namespace TimelineSmash.Editor
                 return 0;
 
             int bound = 0;
-            bool overrideKey = !string.IsNullOrEmpty(segment.bindingKey);
+            bool hasOverride = !string.IsNullOrEmpty(segment.bindingKey);
+            Scene scene = resolveBySceneName ? hostDir.gameObject.scene : default;
 
             foreach (var track in sub.GetOutputTracks())
             {
                 if (track == null)
                     continue;
 
-                string key = overrideKey ? segment.bindingKey : track.name;
-                Object target = bindings != null ? bindings.Resolve(key) : null;
+                Object target = Resolve(bindings, segment, track, hasOverride, scene, out string key);
+
+                if (track is ControlTrack control)
+                {
+                    // A ControlTrack carries no generic binding: each clip drives a GameObject through an
+                    // ExposedReference resolved on the host director. Wire those so a control track nested
+                    // inside a sub-timeline isn't silently dead.
+                    int wired = WireControlTrack(hostDir, control, target);
+                    if (wired > 0)
+                        bound += wired;
+                    else if (target == null)
+                        warnings?.Add(Unresolved(key, track, sub));
+                    continue;
+                }
 
                 if (target != null)
                 {
@@ -42,12 +68,112 @@ namespace TimelineSmash.Editor
                 }
                 else
                 {
-                    warnings?.Add(
-                        $"Unresolved binding key '{key}' for track '{track.name}' in sub-timeline '{sub.name}'.");
+                    warnings?.Add(Unresolved(key, track, sub));
                 }
             }
 
             return bound;
+        }
+
+        static string Unresolved(string key, TrackAsset track, TimelineAsset sub) =>
+            $"Unresolved binding key '{key}' for track '{track.name}' in sub-timeline '{sub.name}'.";
+
+        /// <summary>Resolve a track's binding target, returning the key tried (for warnings) via
+        /// <paramref name="key"/>.</summary>
+        static Object Resolve(CompiledBindings bindings, SubTimelineSegment segment, TrackAsset track,
+            bool hasOverride, Scene scene, out string key)
+        {
+            Object target;
+            if (hasOverride)
+            {
+                key = segment.bindingKey + "/" + track.name;        // per-track override
+                target = bindings != null ? bindings.Resolve(key) : null;
+                if (target == null)
+                {
+                    var bare = bindings != null ? bindings.Resolve(segment.bindingKey) : null;
+                    if (bare != null)
+                    {
+                        key = segment.bindingKey;                   // whole-sub override (back-compat)
+                        return bare;
+                    }
+                    // leave the namespaced key in `key`: that's the key an author should add.
+                }
+            }
+            else
+            {
+                key = track.name;
+                target = bindings != null ? bindings.Resolve(key) : null;
+            }
+
+            if (target == null && scene.IsValid())
+                target = FindInScene(scene, hasOverride ? segment.bindingKey : track.name, track);
+
+            return target;
+        }
+
+        /// <summary>Find a GameObject named <paramref name="name"/> in <paramref name="scene"/> and return
+        /// the component the track binds to (or the GameObject itself when the track binds to a GameObject).</summary>
+        static Object FindInScene(Scene scene, string name, TrackAsset track)
+        {
+            if (string.IsNullOrEmpty(name) || !scene.IsValid())
+                return null;
+
+            GameObject match = null;
+            foreach (var root in scene.GetRootGameObjects())
+            {
+                match = root.name == name ? root : FindChild(root.transform, name);
+                if (match != null)
+                    break;
+            }
+            if (match == null)
+                return null;
+
+            var bindingType = BindingTypeOf(track);
+            if (bindingType == null || bindingType == typeof(GameObject))
+                return match;
+            return match.GetComponent(bindingType);
+        }
+
+        static GameObject FindChild(Transform t, string name)
+        {
+            for (int i = 0; i < t.childCount; i++)
+            {
+                var c = t.GetChild(i);
+                if (c.name == name)
+                    return c.gameObject;
+                var deeper = FindChild(c, name);
+                if (deeper != null)
+                    return deeper;
+            }
+            return null;
+        }
+
+        static System.Type BindingTypeOf(TrackAsset track)
+        {
+            var attr = (TrackBindingTypeAttribute)System.Attribute.GetCustomAttribute(
+                track.GetType(), typeof(TrackBindingTypeAttribute));
+            return attr?.type;
+        }
+
+        /// <summary>Wire a nested ControlTrack's clips: point each clip's exposed source-GameObject
+        /// reference at <paramref name="target"/> (resolved to a GameObject) on the host director.</summary>
+        static int WireControlTrack(PlayableDirector hostDir, ControlTrack track, Object target)
+        {
+            var go = target as GameObject ?? (target as Component)?.gameObject;
+            if (go == null)
+                return 0;
+
+            int n = 0;
+            foreach (var clip in track.GetClips())
+            {
+                if (clip.asset is ControlPlayableAsset cpa &&
+                    !PropertyName.IsNullOrEmpty(cpa.sourceGameObject.exposedName))
+                {
+                    hostDir.SetReferenceValue(cpa.sourceGameObject.exposedName, go);
+                    n++;
+                }
+            }
+            return n;
         }
     }
 }
