@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using UnityEditor;
+using UnityEditor.Timeline;
 using UnityEngine;
 using UnityEngine.Timeline;
 
@@ -38,6 +39,18 @@ namespace TimelineSmash.Editor
                         });
                         EditorUtility.SetDirty(set);
                         _toAdd = null;
+                    }
+                }
+
+                if (GUILayout.Button("New sub-timeline + segment"))
+                {
+                    string track = string.IsNullOrEmpty(set.owner) ? "Track" : set.owner;
+                    string subName = $"{(string.IsNullOrEmpty(set.owner) ? set.name : set.owner)}_Shot";
+                    var tl = CinematicScaffold.AddSubTimeline(set, subName, "Main", track);
+                    if (tl != null)
+                    {
+                        Selection.activeObject = tl;
+                        TimelineEditor.GetOrCreateWindow().SetTimeline(tl);
                     }
                 }
 

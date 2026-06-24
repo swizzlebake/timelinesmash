@@ -4,6 +4,19 @@ All notable changes to this package are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.7.0] - 2026-06-24
+
+### Added
+- **One-click scaffolding.** A new `CinematicScaffold` service plus entry points remove the manual
+  asset-creation dance:
+  - **Assets ▸ TimelineSmash ▸ New Cinematic** creates a `BindingManifest` + `CinematicComposition` wired
+    together and selects the composition.
+  - **Add contributor** (composition inspector) creates a `ContributorSegmentSet` and adds it to the
+    composition in one click.
+  - **New sub-timeline + segment** (contributor inspector) creates a fresh `.playable` with a named
+    AnimationTrack, appends a segment for it (placed after the latest), and opens it in the Timeline window.
+- Tests: `CinematicScaffoldTests` cover create-and-wire, add-contributor, and new-sub-timeline placement.
+
 ## [0.6.0] - 2026-06-24
 
 ### Added

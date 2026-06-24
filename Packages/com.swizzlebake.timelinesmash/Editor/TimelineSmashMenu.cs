@@ -8,6 +8,26 @@ namespace TimelineSmash.Editor
     {
         const string AssetMenu = "Assets/TimelineSmash/Assemble Composition";
         const string AssetMenuActiveScene = "Assets/TimelineSmash/Assemble Into Active Scene";
+        const string NewCinematicMenu = "Assets/TimelineSmash/New Cinematic";
+
+        [MenuItem(NewCinematicMenu, false, 0)]
+        static void NewCinematic()
+        {
+            string path = EditorUtility.SaveFilePanelInProject(
+                "New TimelineSmash Cinematic", "Cinematic", "asset",
+                "Creates a Cinematic Composition + Binding Manifest, wired together.");
+            if (string.IsNullOrEmpty(path))
+                return;
+
+            string folder = System.IO.Path.GetDirectoryName(path).Replace('\\', '/');
+            string name = System.IO.Path.GetFileNameWithoutExtension(path);
+
+            var comp = CinematicScaffold.CreateCinematic(folder, name);
+            Selection.activeObject = comp;
+            EditorGUIUtility.PingObject(comp);
+            Debug.Log($"[TimelineSmash] Created cinematic '{comp.cinematicName}' + manifest. " +
+                      "Add contributors from its inspector.");
+        }
 
         [MenuItem(AssetMenu, true)]
         static bool ValidateAssembleSelected()

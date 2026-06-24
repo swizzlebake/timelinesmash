@@ -28,6 +28,20 @@ namespace TimelineSmash.Editor
 
             using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
             {
+                EditorGUILayout.LabelField("Author", EditorStyles.boldLabel);
+                if (GUILayout.Button("Add contributor"))
+                {
+                    var set = CinematicScaffold.AddContributor(comp, "New Artist");
+                    if (set != null)
+                    {
+                        Selection.activeObject = set;
+                        EditorGUIUtility.PingObject(set);
+                    }
+                }
+            }
+
+            using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
+            {
                 EditorGUILayout.LabelField("Assemble", EditorStyles.boldLabel);
 
                 if (GUILayout.Button("Assemble (master + stage)", GUILayout.Height(26)))

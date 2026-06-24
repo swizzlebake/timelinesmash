@@ -54,7 +54,10 @@ To pin a version, append `#0.1.0` (a git tag) to the URL.
 | `<Name>_Master.playable` | **generated** | native master Timeline (one Control Track per lane) — gitignored |
 | `<Name>_Stage.unity` | **generated** | master director + one host director per segment, bindings applied — gitignored |
 
-Create assets via **Assets ▸ Create ▸ TimelineSmash ▸ …**.
+Create assets via **Assets ▸ Create ▸ TimelineSmash ▸ …**, or scaffold a whole cinematic in one step with
+**Assets ▸ TimelineSmash ▸ New Cinematic** (creates a wired composition + manifest). From there, **Add
+contributor** (composition inspector) and **New sub-timeline + segment** (contributor inspector) create and
+wire the remaining assets for you.
 
 ## Workflow
 
