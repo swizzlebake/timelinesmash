@@ -60,35 +60,37 @@ namespace TimelineSmashDemo
             var dev = CreateContributor("Dev (satellite)", "Satellite", satCtrlSub);
             var comp = CreateComposition("ElaborateDemo", alice, bob, cleo, dev);
 
-            // 4. The actors the bindings point at.
+            // 4. The actors, each NAMED to match its track so bindings resolve by name (no manifest).
             var hero = GameObject.CreatePrimitive(PrimitiveType.Cube);
             hero.name = "Hero";
-            var heroAnimator = hero.AddComponent<Animator>();
-            var speaker = hero.AddComponent<AudioSource>();
+            hero.AddComponent<Animator>();
+
+            var voice = new GameObject("Voice");
+            voice.AddComponent<AudioSource>();
 
             var prop = GameObject.CreatePrimitive(PrimitiveType.Sphere);
             prop.name = "Prop";
             prop.transform.position = new Vector3(0f, 2f, 0f);
 
-            var camGO = new GameObject("Main Camera");
+            var camGO = new GameObject("Camera");
             camGO.tag = "MainCamera";
             camGO.AddComponent<Camera>();
-            var camAnimator = camGO.AddComponent<Animator>();
+            camGO.AddComponent<Animator>();
 
             var orb = GameObject.CreatePrimitive(PrimitiveType.Capsule);
             orb.name = "Orb";
-            var orbAnimator = orb.AddComponent<Animator>();
+            orb.AddComponent<Animator>();
 
             var satellite = GameObject.CreatePrimitive(PrimitiveType.Cube);
             satellite.name = "Satellite";
             satellite.transform.localScale = Vector3.one * 0.4f;
             var satelliteAnimator = satellite.AddComponent<Animator>();
 
-            // The rig the nested ControlTrack drives: a PlayableDirector that plays `satInner`, bound to the
-            // Satellite's Animator. TimelineSmash wires the host director's exposed reference to this rig
-            // (manifest key "SatelliteCtrl"); the rig in turn animates the Satellite — a control track that
-            // animates an object through a nested director.
-            var satRig = new GameObject("Satellite_Rig");
+            // The rig the nested ControlTrack drives, named to match the "SatelliteRig" control track: a
+            // PlayableDirector that plays `satInner`, bound directly to the Satellite's Animator. TimelineSmash
+            // resolves the control track's source to this rig by name; the rig then animates the Satellite —
+            // a control track that animates an object through a nested director.
+            var satRig = new GameObject("SatelliteRig");
             var satRigDir = satRig.AddComponent<PlayableDirector>();
             satRigDir.playableAsset = satInner;
             satRigDir.playOnAwake = false;
@@ -99,21 +101,14 @@ namespace TimelineSmashDemo
             light.type = LightType.Directional;
             lightGO.transform.rotation = Quaternion.Euler(50f, -30f, 0f);
 
-            // 5. The manifest maps logical keys to the LIVE scene actors. It stays in memory — an .asset
-            //    cannot serialize a scene reference (this is finding C). BindingCompiler reads it directly.
-            var manifest = ScriptableObject.CreateInstance<BindingManifest>();
-            manifest.entries.Add(new BindingManifest.Entry { key = "Body", target = heroAnimator });
-            manifest.entries.Add(new BindingManifest.Entry { key = "Voice", target = speaker });
-            manifest.entries.Add(new BindingManifest.Entry { key = "Prop", target = prop });
-            manifest.entries.Add(new BindingManifest.Entry { key = "CameraRig", target = camAnimator });
-            manifest.entries.Add(new BindingManifest.Entry { key = "Orb", target = orbAnimator });
-            // The nested ControlTrack binds (by name) to a GameObject — the rig it drives.
-            manifest.entries.Add(new BindingManifest.Entry { key = "SatelliteCtrl", target = satRig });
-            var compiled = BindingCompiler.Compile(manifest);
+            // 5. No manifest needed: every actor is named after its track, so bindings resolve by scene
+            //    name at populate time. (You could still author a BindingManifest to be explicit.)
+            var compiled = BindingCompiler.Compile(null);
 
-            // 6. Assemble the master, then drop master + host directors into the actor scene.
+            // 6. Assemble the master, then drop master + host directors into the actor scene, resolving
+            //    each track to the like-named actor.
             var result = CinematicAssembler.BuildMaster(comp, GenDir + "/Demo_Master.playable");
-            var build = StageSceneBuilder.Populate(scene, result, compiled);
+            var build = StageSceneBuilder.Populate(scene, result, compiled, resolveBySceneName: true);
 
             // 7. Save the playable scene.
             EditorSceneManager.MarkSceneDirty(scene);
@@ -141,7 +136,7 @@ namespace TimelineSmashDemo
 
             var tl = CreateTimeline(SubDir + "/Hero.playable");
 
-            var body = tl.CreateTrack<AnimationTrack>(null, "Body");
+            var body = tl.CreateTrack<AnimationTrack>(null, "Hero");
             var bodyTc = body.CreateClip(bodyClip);
             bodyTc.start = 0;
             bodyTc.duration = Length;
@@ -166,7 +161,7 @@ namespace TimelineSmashDemo
                 new Vector3(-6f, 2f, -10f), new Vector3(6f, 2f, -10f), 0f);
 
             var tl = CreateTimeline(SubDir + "/Camera.playable");
-            var rig = tl.CreateTrack<AnimationTrack>(null, "CameraRig");
+            var rig = tl.CreateTrack<AnimationTrack>(null, "Camera");
             var tc = rig.CreateClip(rigClip);
             tc.start = 0;
             tc.duration = Length;
@@ -210,13 +205,14 @@ namespace TimelineSmashDemo
             return tl;
         }
 
-        /// <summary>A contributor sub-timeline whose single ControlTrack plays the satellite rig director
-        /// (updateDirector). The clip's source GameObject is an exposed reference resolved on the host
-        /// director from the manifest key "SatelliteCtrl" — the nested-control-track wiring fixed in 0.5.0.</summary>
+        /// <summary>A contributor sub-timeline whose single ControlTrack ("SatelliteRig") plays the satellite
+        /// rig director (updateDirector). The clip's source GameObject is an exposed reference resolved on the
+        /// host director — by scene name to the like-named "SatelliteRig" GameObject (the nested-control-track
+        /// wiring from 0.5.0 + bind-by-name).</summary>
         static TimelineAsset BuildSatelliteControlSub()
         {
             var tl = CreateTimeline(SubDir + "/SatelliteControl.playable");
-            var ctrl = tl.CreateTrack<ControlTrack>(null, "SatelliteCtrl");
+            var ctrl = tl.CreateTrack<ControlTrack>(null, "SatelliteRig");
             var clip = ctrl.CreateClip<ControlPlayableAsset>();
             var cpa = (ControlPlayableAsset)clip.asset;
             cpa.updateDirector = true;       // drive the nested rig's PlayableDirector
