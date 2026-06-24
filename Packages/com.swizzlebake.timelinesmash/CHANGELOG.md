@@ -4,6 +4,18 @@ All notable changes to this package are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.8.0] - 2026-06-24
+
+### Added
+- **Segment editing aids.** A `CustomPropertyDrawer` for `SubTimelineSegment` gives each segment a
+  collapsible one-line summary (name · lane · time range), a warning when the **sub-timeline / sub-composition
+  either-or** is violated (both set, or neither), a **lane dropdown** seeded from lanes already in use, and a
+  live **"Binds keys: …"** preview of the manifest keys the segment needs (reusing the same `CandidateKeys`
+  as the runtime and the Bindings checklist).
+- **Same-lane overlap warning.** The contributor inspector flags segments stacked on one lane via a new
+  pure, tested `SegmentDiagnostics` helper.
+- Tests: `SegmentDiagnosticsTests` cover source conflict/missing detection and lane-overlap cases.
+
 ## [0.7.0] - 2026-06-24
 
 ### Added

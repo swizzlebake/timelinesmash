@@ -18,6 +18,11 @@ namespace TimelineSmash.Editor
             var set = (ContributorSegmentSet)target;
             EditorGUILayout.Space();
 
+            var overlaps = SegmentDiagnostics.LaneOverlaps(set);
+            if (overlaps.Count > 0)
+                EditorGUILayout.HelpBox("Segments overlap on a lane:\n - " + string.Join("\n - ", overlaps),
+                    MessageType.Warning);
+
             using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
             {
                 EditorGUILayout.LabelField("Quick add segment", EditorStyles.boldLabel);

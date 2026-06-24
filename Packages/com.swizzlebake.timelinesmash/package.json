@@ -1,6 +1,6 @@
 {
   "name": "com.swizzlebake.timelinesmash",
-  "version": "0.7.0",
+  "version": "0.8.0",
   "displayName": "TimelineSmash",
   "description": "Collaborative cinematic assembly for Unity Timeline. Each artist authors isolated sub-timelines in their own files; a deterministic assembler bakes them into a native master Timeline (plus a regenerable stage scene) so teams build long, intricate cinematics together without merge conflicts. Bindings to shared scene actors live in a manifest, not in the scene.",
   "unity": "6000.3",
