@@ -4,6 +4,22 @@ All notable changes to this package are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.6.0] - 2026-06-24
+
+### Added
+- **Bindings checklist on the Cinematic Composition inspector.** A new `BindingPlan` introspects every track
+  across all contributors and shows, per track, whether it resolves (✓, to which actor and key) or is
+  unresolved (✗, with the exact key to author) — turning previously-silent binding failures into a visible
+  to-do list. Buttons: **Create & assign manifest** (when none is set) and **Add N missing key(s)** (seeds the
+  manifest with the suggested keys so the artist just drags actors onto the targets). The plan resolves
+  against the same candidate keys the runtime applier uses, so it never disagrees with assemble.
+- **Assemble into active scene** is now a button on the composition inspector (previously only a right-click
+  menu item), alongside a tip surfacing per-track override keys and bind-by-name.
+
+### Changed
+- `BindingApplier` key resolution is factored into a shared `CandidateKeys` helper (and `BindingTypeOf` is
+  now internal) so the inspector and the runtime stay in lockstep. Behaviour is unchanged.
+
 ## [0.5.0] - 2026-06-24
 
 ### Added

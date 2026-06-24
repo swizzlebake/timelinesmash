@@ -62,8 +62,11 @@ Create assets via **Assets ▸ Create ▸ TimelineSmash ▸ …**.
 2. Create a **Binding Manifest** mapping logical names to those actors.
 3. Each artist creates sub-timelines and a **Contributor Segment Set** placing them by lane + time.
    - A sub-timeline's track named `Hero` binds to the manifest key `Hero` (or set an explicit key on the segment).
-4. Create a **Cinematic Composition** referencing the contributor sets + the manifest.
-5. Select the composition and press **Assemble (master + stage)**.
+4. Create a **Cinematic Composition** referencing the contributor sets + the manifest. Its inspector shows
+   a **Bindings checklist** — every track that needs an actor and whether it's bound — with an **Add missing
+   keys** button that seeds the manifest for you (then just drag actors onto the targets).
+5. Select the composition and press **Assemble (master + stage)** — or **Assemble into active scene** to wire
+   the cinematic into the scene you already have open (see below).
 6. **Open Master** to preview/scrub in the native Timeline window, or open the stage scene and press Play.
 7. *(with Recorder installed)* press **Record** to export.
 
@@ -103,6 +106,22 @@ size. This sidesteps the built-in H.264 encoder's ~4K ceiling (the limit was the
 capture). PNG = tonemapped sRGB (ready to encode); EXR = linear HDR (for grading). Enter Play Mode to
 capture; it auto-stops at the last frame. Ensure the capture camera (default tag `MainCamera`) is present
 in the open scene. *(ProRes is macOS/Windows only — image sequences are the cross-platform high-res path.)*
+
+### Easier binding & live-scene assembly (0.5.0+)
+
+Binding is the step most likely to trip an artist, so several conveniences make it visible and forgiving:
+
+- **Bindings checklist** *(0.6.0)* — the Cinematic Composition inspector lists every track across all
+  contributors that needs an actor, shows whether it resolves (and to what) or is unresolved with the exact
+  key to author, and offers **Create & assign manifest** / **Add N missing key(s)**. No more hunting through
+  `.playable`s by hand or debugging silent failures after assemble.
+- **Per-track retargeting** *(0.5.0)* — reuse one multi-track sub-timeline for different actors by setting a
+  per-segment **Binding Key** and authoring keys like `hero/Body`, `hero/Voice`. A bare key still binds the
+  whole sub-timeline (backwards compatible).
+- **Assemble into active scene + bind by name** *(0.5.0)* — **Assemble into active scene** wires the master +
+  host directors into the scene you already have open (idempotent; your actors are never destroyed). Any key
+  the manifest doesn't resolve falls back to a scene GameObject of that **name** — so naming an actor after a
+  track is enough, no manifest entry required.
 
 ## Development
 

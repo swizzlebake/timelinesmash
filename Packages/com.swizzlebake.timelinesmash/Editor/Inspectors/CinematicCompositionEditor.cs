@@ -1,4 +1,6 @@
+using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEditor.Timeline;
@@ -31,6 +33,9 @@ namespace TimelineSmash.Editor
                 if (GUILayout.Button("Assemble (master + stage)", GUILayout.Height(26)))
                     Report(CinematicAssembleService.Assemble(comp, true));
 
+                if (GUILayout.Button("Assemble into active scene"))
+                    Report(CinematicAssembleService.AssembleIntoActiveScene(comp));
+
                 using (new EditorGUILayout.HorizontalScope())
                 {
                     if (GUILayout.Button("Master only"))
@@ -62,6 +67,7 @@ namespace TimelineSmash.Editor
             }
 
             DrawOverview(comp);
+            DrawBindings(comp);
         }
 
         static void Report(AssembleResult result)
@@ -149,6 +155,123 @@ namespace TimelineSmash.Editor
         {
             int h = owner != null ? owner.GetHashCode() : 0;
             return s_OwnerColors[(h & 0x7fffffff) % s_OwnerColors.Length];
+        }
+
+        // --- Bindings checklist -------------------------------------------------------------------
+
+        void DrawBindings(CinematicComposition comp)
+        {
+            var plan = BindingPlan.Build(comp);
+
+            EditorGUILayout.Space();
+            using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
+            {
+                EditorGUILayout.LabelField(
+                    plan.Total == 0 ? "Bindings — no bindable tracks" : $"Bindings — {plan.Bound} of {plan.Total} bound",
+                    EditorStyles.boldLabel);
+
+                if (comp.bindingManifest == null)
+                {
+                    EditorGUILayout.HelpBox(
+                        "No binding manifest assigned. Create one to map track names to shared scene actors.",
+                        MessageType.Info);
+                    if (GUILayout.Button("Create & assign manifest"))
+                    {
+                        CreateAndAssignManifest(comp);
+                        return;
+                    }
+                }
+
+                var existingKeys = comp.bindingManifest != null
+                    ? new HashSet<string>(comp.bindingManifest.entries
+                        .Where(e => e != null && !string.IsNullOrEmpty(e.key)).Select(e => e.key))
+                    : new HashSet<string>();
+
+                foreach (var r in plan.requirements)
+                {
+                    using (new EditorGUILayout.HorizontalScope())
+                    {
+                        var prev = GUI.color;
+                        GUI.color = r.Resolved ? new Color(0.5f, 0.9f, 0.5f) : new Color(1f, 0.55f, 0.55f);
+                        GUILayout.Label(r.Resolved ? "✓" : "✗", GUILayout.Width(14));
+                        GUI.color = prev;
+
+                        GUILayout.Label($"{r.owner}/{r.lane} · {r.trackName} ({r.TypeLabel})",
+                            EditorStyles.miniLabel, GUILayout.MinWidth(120));
+                        GUILayout.FlexibleSpace();
+                        GUILayout.Label(
+                            r.Resolved ? $"→ {TargetName(r.target)}  key '{r.resolvedKey}'"
+                                       : $"needs key '{r.suggestedKey}'",
+                            EditorStyles.miniLabel);
+                    }
+                }
+
+                int toAdd = comp.bindingManifest == null ? 0 : plan.requirements
+                    .Where(r => !r.Resolved).Select(r => r.suggestedKey).Distinct()
+                    .Count(k => !existingKeys.Contains(k));
+
+                if (toAdd > 0 && GUILayout.Button($"Add {toAdd} missing key(s) to manifest"))
+                    AddMissingKeys(comp, plan);
+
+                EditorGUILayout.HelpBox(
+                    "A track binds to the manifest key matching its name. To reuse one sub-timeline for " +
+                    "different actors, set a per-segment Binding Key and add keys like '<key>/<trackName>'. " +
+                    "Or name a scene object after a track and use Assemble Into Active Scene to bind without " +
+                    "a manifest entry.",
+                    MessageType.None);
+
+                if (plan.warnings.Count > 0)
+                    EditorGUILayout.HelpBox(string.Join("\n", plan.warnings), MessageType.Warning);
+            }
+        }
+
+        static string TargetName(Object target)
+        {
+            if (target == null)
+                return "(none)";
+            return target is Component c ? $"{c.gameObject.name} ({c.GetType().Name})" : target.name;
+        }
+
+        static void CreateAndAssignManifest(CinematicComposition comp)
+        {
+            var dir = Path.GetDirectoryName(AssetDatabase.GetAssetPath(comp));
+            if (string.IsNullOrEmpty(dir))
+                dir = "Assets";
+            var path = AssetDatabase.GenerateUniqueAssetPath(
+                $"{dir.Replace('\\', '/')}/{CinematicAssembleService.SafeName(comp)}_Manifest.asset");
+
+            var manifest = CreateInstance<BindingManifest>();
+            AssetDatabase.CreateAsset(manifest, path);
+            AssetDatabase.SaveAssets();
+
+            Undo.RecordObject(comp, "Assign binding manifest");
+            comp.bindingManifest = manifest;
+            EditorUtility.SetDirty(comp);
+            Debug.Log($"[TimelineSmash] Created binding manifest '{path}' and assigned it.");
+        }
+
+        static void AddMissingKeys(CinematicComposition comp, BindingPlan plan)
+        {
+            var manifest = comp.bindingManifest;
+            if (manifest == null)
+                return;
+
+            var existing = new HashSet<string>(manifest.entries
+                .Where(e => e != null && !string.IsNullOrEmpty(e.key)).Select(e => e.key));
+
+            Undo.RecordObject(manifest, "Add missing binding keys");
+            int added = 0;
+            foreach (var r in plan.requirements)
+            {
+                if (r.Resolved || !existing.Add(r.suggestedKey))
+                    continue;
+                manifest.entries.Add(new BindingManifest.Entry { key = r.suggestedKey, target = null });
+                added++;
+            }
+
+            EditorUtility.SetDirty(manifest);
+            Debug.Log($"[TimelineSmash] Added {added} binding key(s) to '{manifest.name}'. " +
+                      "Assign their targets in the manifest.");
         }
     }
 }
