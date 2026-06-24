@@ -1,0 +1,21 @@
+{
+    "name": "TimelineSmashDemo.Editor",
+    "rootNamespace": "TimelineSmashDemo",
+    "references": [
+        "TimelineSmash.Runtime",
+        "TimelineSmash.Editor",
+        "Unity.Timeline",
+        "Unity.Timeline.Editor"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
