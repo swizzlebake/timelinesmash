@@ -29,6 +29,7 @@ namespace TimelineSmash.Editor
 
         public static string MasterPath(CinematicComposition c) => $"{OutputFolder(c)}/{SafeName(c)}_Master.playable";
         public static string StagePath(CinematicComposition c) => $"{OutputFolder(c)}/{SafeName(c)}_Stage.unity";
+        public static string BindingsPath(CinematicComposition c) => $"{OutputFolder(c)}/{SafeName(c)}_Bindings.asset";
 
         /// <summary>Build the master timeline and, optionally, the stage scene. Returns the result,
         /// or null if the user cancelled the scene-save prompt before the stage build.</summary>
@@ -39,12 +40,16 @@ namespace TimelineSmash.Editor
 
             var result = CinematicAssembler.BuildMaster(composition, MasterPath(composition));
 
+            // Compile the manifest tree into one master lookup and write the regenerable compiled asset.
+            var compiled = BindingCompiler.Compile(composition.bindingManifest, result.warnings);
+            BindingCompiler.WriteAsset(compiled, BindingsPath(composition));
+
             if (buildStage)
             {
                 if (!EditorSceneManager.SaveCurrentModifiedScenesIfUserWantsTo())
                     return result; // user cancelled; master is still generated
 
-                StageSceneBuilder.BuildStage(result, composition.bindingManifest, StagePath(composition));
+                StageSceneBuilder.BuildStage(result, compiled, StagePath(composition));
             }
 
             return result;

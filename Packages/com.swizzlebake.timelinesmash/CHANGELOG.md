@@ -4,6 +4,28 @@ All notable changes to this package are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.0] - 2026-06-24
+
+### Added
+- **Composable binding manifests.** A `BindingManifest` can now `include` any number of child lookup
+  manifests, so teams split bindings across files. At assemble time `BindingCompiler.Compile` flattens
+  the whole tree into one master lookup — **first definition of a key wins** (a manifest's own entries
+  before its includes, includes in order); duplicates are ignored and warned (naming both sources).
+  Diamond includes compile once; cycles are detected and skipped.
+- The compiled master lookup drives binding application, and a flat, regenerable `<Name>_Bindings.asset`
+  is written next to the master timeline + stage scene (gitignored output folder) for inspection. Note:
+  a saved asset cannot serialize *scene-object* references, so on-disk targets are a best-effort snapshot;
+  live binding application uses the in-memory compiled lookup.
+- `BindingManifest` inspector: a **Compile preview** button reports the compiled key count and any
+  duplicate/cycle warnings.
+- Tests: include flattening, first-wins precedence (local + include order), diamond, cycle guard, and
+  compiled-asset round-trip.
+
+### Changed
+- `BindingApplier.Apply` and `StageSceneBuilder.BuildStage`/`Populate` take a compiled lookup
+  (`CompiledBindings`) instead of a raw `BindingManifest`. `BindingManifest.Resolve` remains a
+  single-level (own-entries-only) lookup.
+
 ## [0.2.0] - 2026-06-24
 
 ### Added

@@ -86,6 +86,15 @@ inspector) extracts segments into a standalone group asset and references it in 
 are rebased so the result is identical — the group is just portable now, and can be referenced from
 other cinematics.
 
+### Composable bindings (0.3.0+)
+
+Bindings are merge-safe too. A `BindingManifest` can **include** any number of child lookup manifests,
+so teams split bindings across files. At assemble time the whole tree compiles into **one master
+lookup** — the **first definition of a key wins** (a manifest's own entries before its includes,
+includes in order); duplicates are ignored and reported. The compiled lookup is also written to a flat
+`<Name>_Bindings.asset` (gitignored) for inspection. Use the **Compile preview** button on a manifest
+to check the key count and any conflicts.
+
 ## Development
 
 This repository is itself a Unity project that embeds the package under

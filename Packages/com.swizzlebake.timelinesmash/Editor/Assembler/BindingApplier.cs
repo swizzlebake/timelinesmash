@@ -15,7 +15,7 @@ namespace TimelineSmash.Editor
         /// <summary>Bind every output track of the segment's sub-timeline on <paramref name="hostDir"/>.
         /// The key is <c>segment.bindingKey</c> when set, otherwise the track's own name. Returns the
         /// number of tracks successfully bound; unresolved keys are appended to <paramref name="warnings"/>.</summary>
-        public static int Apply(PlayableDirector hostDir, SubTimelineSegment segment, BindingManifest manifest, List<string> warnings)
+        public static int Apply(PlayableDirector hostDir, SubTimelineSegment segment, CompiledBindings bindings, List<string> warnings)
         {
             if (hostDir == null || segment == null)
                 return 0;
@@ -33,7 +33,7 @@ namespace TimelineSmash.Editor
                     continue;
 
                 string key = overrideKey ? segment.bindingKey : track.name;
-                Object target = manifest != null ? manifest.Resolve(key) : null;
+                Object target = bindings != null ? bindings.Resolve(key) : null;
 
                 if (target != null)
                 {

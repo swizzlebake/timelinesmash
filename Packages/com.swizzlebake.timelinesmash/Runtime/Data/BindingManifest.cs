@@ -26,7 +26,13 @@ namespace TimelineSmash
 
         public List<Entry> entries = new List<Entry>();
 
-        /// <summary>Resolve a logical key to its scene actor, or null when unmapped/empty.</summary>
+        [Tooltip("Other binding manifests to include. At assemble time the whole tree is compiled into " +
+                 "one master lookup; the first definition of a key wins (this manifest's own entries " +
+                 "before its includes, includes in order). Lets teams split bindings across files.")]
+        public List<BindingManifest> includes = new List<BindingManifest>();
+
+        /// <summary>Resolve a logical key against THIS manifest's own entries only (single level).
+        /// Full-tree resolution (entries + includes) is done by the assemble-time BindingCompiler.</summary>
         public Object Resolve(string key)
         {
             if (string.IsNullOrEmpty(key))

@@ -45,7 +45,7 @@ namespace TimelineSmash.Tests
             var host = Host(sub);
             var warnings = new List<string>();
 
-            int bound = BindingApplier.Apply(host, TestAssets.Seg(sub, "Main", 0, 5), manifest, warnings);
+            int bound = BindingApplier.Apply(host, TestAssets.Seg(sub, "Main", 0, 5), BindingCompiler.Compile(manifest), warnings);
 
             Assert.AreEqual(1, bound);
             Assert.AreEqual(0, warnings.Count);
@@ -63,7 +63,7 @@ namespace TimelineSmash.Tests
             var warnings = new List<string>();
 
             var seg = TestAssets.Seg(sub, "Main", 0, 5, bindingKey: "Protagonist");
-            int bound = BindingApplier.Apply(host, seg, manifest, warnings);
+            int bound = BindingApplier.Apply(host, seg, BindingCompiler.Compile(manifest), warnings);
 
             Assert.AreEqual(1, bound);
             var track = sub.GetOutputTracks().First();
@@ -78,7 +78,7 @@ namespace TimelineSmash.Tests
             var host = Host(sub);
             var warnings = new List<string>();
 
-            int bound = BindingApplier.Apply(host, TestAssets.Seg(sub, "Main", 0, 5), manifest, warnings);
+            int bound = BindingApplier.Apply(host, TestAssets.Seg(sub, "Main", 0, 5), BindingCompiler.Compile(manifest), warnings);
 
             Assert.AreEqual(0, bound);
             Assert.AreEqual(1, warnings.Count);

@@ -24,12 +24,12 @@ namespace TimelineSmash.Editor
     public static class StageSceneBuilder
     {
         /// <summary>Create a fresh single scene, populate it, and save it to <paramref name="scenePath"/>.</summary>
-        public static StageBuildResult BuildStage(AssembleResult result, BindingManifest manifest, string scenePath)
+        public static StageBuildResult BuildStage(AssembleResult result, CompiledBindings bindings, string scenePath)
         {
             EditorAssetUtil.EnsureFolder(Path.GetDirectoryName(scenePath));
 
             var scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
-            var build = Populate(scene, result, manifest);
+            var build = Populate(scene, result, bindings);
 
             EditorSceneManager.MarkSceneDirty(scene);
             EditorSceneManager.SaveScene(scene, scenePath);
@@ -38,7 +38,7 @@ namespace TimelineSmash.Editor
 
         /// <summary>Populate an existing scene with the master + host directors (no file I/O).
         /// Used by <see cref="BuildStage"/> and directly by tests against an additive scene.</summary>
-        public static StageBuildResult Populate(Scene scene, AssembleResult result, BindingManifest manifest)
+        public static StageBuildResult Populate(Scene scene, AssembleResult result, CompiledBindings bindings)
         {
             var build = new StageBuildResult();
 
@@ -68,7 +68,7 @@ namespace TimelineSmash.Editor
                 masterDir.SetReferenceValue(entry.exposedName, hostGO);
 
                 // Bindings resolve on the host director (where the nested timeline plays).
-                BindingApplier.Apply(hostDir, entry.segment, manifest, result.warnings);
+                BindingApplier.Apply(hostDir, entry.segment, bindings, result.warnings);
             }
 
             return build;
