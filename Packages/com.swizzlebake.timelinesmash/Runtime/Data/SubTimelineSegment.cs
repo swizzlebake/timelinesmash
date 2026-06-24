@@ -41,5 +41,10 @@ namespace TimelineSmash
 
         [Tooltip("Playback speed multiplier for this segment.")]
         public double speed = 1;
+
+        [Tooltip("Optional prefab to spawn for this segment's duration. The master gets a parallel control " +
+                 "clip that instantiates the prefab when the segment starts and destroys it when it ends. " +
+                 "Use a self-animating prefab (its own PlayableDirector / Animator / particles).")]
+        public GameObject spawnPrefab;
     }
 }

@@ -194,6 +194,33 @@ namespace TimelineSmash.Editor
                     clip = clip,
                     control = control,
                 });
+
+                // Optional per-segment prefab spawn: a parallel control clip (on a per-lane spawn track so it
+                // never collides with the host-driving clip) that instantiates the prefab for the segment's
+                // duration. The prefab reference is a project asset, so it serializes into the master.
+                if (leaf.segment.spawnPrefab != null)
+                {
+                    string spawnLane = "Spawn:" + lane;
+                    if (!laneTracks.TryGetValue(spawnLane, out var spawnTrack))
+                    {
+                        spawnTrack = master.CreateTrack<ControlTrack>(null, spawnLane);
+                        laneTracks[spawnLane] = spawnTrack;
+                    }
+
+                    var spawnClip = spawnTrack.CreateClip<ControlPlayableAsset>();
+                    var spawnControl = (ControlPlayableAsset)spawnClip.asset;
+                    spawnControl.prefabGameObject = leaf.segment.spawnPrefab;
+                    spawnControl.updateDirector = true;     // drive a self-animating prefab's own director
+                    spawnControl.updateParticle = true;
+                    spawnControl.updateITimeControl = true;
+                    spawnControl.searchHierarchy = true;
+                    spawnControl.active = true;
+
+                    spawnClip.start = leaf.start;
+                    spawnClip.duration = clip.duration;
+                    spawnClip.timeScale = clip.timeScale;
+                    spawnClip.displayName = $"Spawn {leaf.segment.spawnPrefab.name}";
+                }
             }
 
             bool hasExplicit = composition != null && composition.settings != null && composition.settings.totalDuration > 0;

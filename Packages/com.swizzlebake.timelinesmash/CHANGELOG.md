@@ -4,6 +4,21 @@ All notable changes to this package are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.0] - 2026-06-24
+
+### Added
+- **Per-segment prefab spawning.** `SubTimelineSegment.spawnPrefab` — when set, the assembler adds a
+  parallel control clip (on a per-lane `Spawn:<lane>` track, so it never collides with the host-driving
+  clip) that instantiates the prefab when the segment starts and destroys it when it ends. Use a
+  self-animating prefab (its own PlayableDirector / Animator / particles). The segment drawer exposes it.
+
+### Fixed
+- **Overview readability.** Overview bar labels now use a black/white text color chosen for contrast against
+  each bar (the theme's grey mini-label washed out on the lighter owner colors); the segment drawer's
+  warning/hint text is no longer drawn in a hard-to-read pale tint.
+- **Open Master** reliably shows the master in the Timeline window — `SetTimeline` is deferred past the
+  freshly-opened window's first layout, instead of needing you to select another timeline first.
+
 ## [0.8.0] - 2026-06-24
 
 ### Added

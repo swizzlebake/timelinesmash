@@ -91,6 +91,16 @@ namespace TimelineSmash.Tests
             return comp;
         }
 
+        /// <summary>A throwaway prefab asset under the test root (used by spawn-prefab tests).</summary>
+        public static GameObject CreatePrefab(string name)
+        {
+            EnsureRoot();
+            var go = new GameObject(name);
+            var prefab = PrefabUtility.SaveAsPrefabAsset(go, $"{Root}/{name}.prefab");
+            Object.DestroyImmediate(go);
+            return prefab;
+        }
+
         // --- Rich content helpers (keyframed motion + assorted track types) -----------------------
         // The base CreateSubTimeline gives a bare, empty AnimationTrack. These build sub-timelines with
         // actual content so the assemble → bind → evaluate pipeline can be exercised end to end.

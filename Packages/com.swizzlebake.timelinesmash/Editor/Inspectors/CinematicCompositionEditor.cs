@@ -111,7 +111,16 @@ namespace TimelineSmash.Editor
             }
 
             Selection.activeObject = master;
-            TimelineEditor.GetOrCreateWindow().SetTimeline(master);
+            var window = TimelineEditor.GetOrCreateWindow();
+            window.Focus();
+            // Defer: a freshly-opened/!focused Timeline window can drop a SetTimeline issued before its
+            // first layout — which is why it only appeared after you selected another timeline. Setting it
+            // on the next editor tick (window initialised, selection settled) shows it immediately.
+            EditorApplication.delayCall += () =>
+            {
+                if (master != null)
+                    TimelineEditor.GetOrCreateWindow().SetTimeline(master);
+            };
         }
 
         static void OpenStage(CinematicComposition comp)
@@ -157,7 +166,7 @@ namespace TimelineSmash.Editor
                     var bar = new Rect(x, row.y + 1, w, row.height - 2);
                     EditorGUI.DrawRect(bar, ColorFor(seg.owner));
                     if (w > 40)
-                        GUI.Label(bar, $" {seg.subTimelineName}", EditorStyles.miniLabel);
+                        BarLabel(bar, $" {seg.subTimelineName}", ColorFor(seg.owner));
                 }
             }
 
@@ -169,6 +178,16 @@ namespace TimelineSmash.Editor
         {
             int h = owner != null ? owner.GetHashCode() : 0;
             return s_OwnerColors[(h & 0x7fffffff) % s_OwnerColors.Length];
+        }
+
+        // Draw a label whose text color contrasts the bar it sits on, so it stays readable on any owner
+        // color and in either editor theme (the default mini-label washed out on the lighter bars).
+        static void BarLabel(Rect bar, string text, Color bg)
+        {
+            float luminance = 0.299f * bg.r + 0.587f * bg.g + 0.114f * bg.b;
+            var style = new GUIStyle(EditorStyles.miniLabel);
+            style.normal.textColor = luminance > 0.55f ? Color.black : Color.white;
+            GUI.Label(bar, text, style);
         }
 
         // --- Bindings checklist -------------------------------------------------------------------

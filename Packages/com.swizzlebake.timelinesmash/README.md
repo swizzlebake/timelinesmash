@@ -48,7 +48,7 @@ To pin a version, append `#0.1.0` (a git tag) to the URL.
 | Asset | Owner | Role |
 | --- | --- | --- |
 | **Sub-timeline** (`.playable`) | one artist | a shot / element, authored in the normal Timeline window |
-| **Contributor Segment Set** | one artist | where that artist's segments go: lane, start, duration, clip-in, speed |
+| **Contributor Segment Set** | one artist | where that artist's segments go: lane, start, duration, clip-in, speed, optional spawn-prefab (instantiated for the segment) |
 | **Binding Manifest** | shared (rare edits) | logical name → shared scene actor (camera, character, light) |
 | **Cinematic Composition** | shared (rare edits) | references the contributor sets + manifest + assemble settings |
 | `<Name>_Master.playable` | **generated** | native master Timeline (one Control Track per lane) — gitignored |

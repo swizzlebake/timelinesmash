@@ -28,8 +28,8 @@ namespace TimelineSmash.Editor
             var subTl = property.FindPropertyRelative("subTimeline").objectReferenceValue;
             var subComp = property.FindPropertyRelative("subComposition").objectReferenceValue;
             bool note = (subTl != null) == (subComp != null); // both set, or neither
-            // subTimeline, subComposition, lane, bindingKey, start, duration, clipIn, speed
-            return 8 + (note ? 1 : 0) + (subTl != null ? 1 : 0);
+            // subTimeline, subComposition, lane, bindingKey, start, duration, clipIn, speed, spawnPrefab
+            return 9 + (note ? 1 : 0) + (subTl != null ? 1 : 0);
         }
 
         public override void OnGUI(Rect pos, SerializedProperty property, GUIContent label)
@@ -62,13 +62,10 @@ namespace TimelineSmash.Editor
             if (conflict || missing)
             {
                 r.y += Step;
-                var prevC = GUI.color;
-                GUI.color = conflict ? new Color(1f, 0.6f, 0.6f) : new Color(0.85f, 0.85f, 0.6f);
                 EditorGUI.LabelField(r, conflict
-                    ? "Set EITHER Sub Timeline OR Sub Composition, not both."
-                    : "Assign a Sub Timeline (or a Sub Composition to nest a group).",
+                    ? "⚠  Set EITHER Sub Timeline OR Sub Composition, not both."
+                    : "⚠  Assign a Sub Timeline (or a Sub Composition to nest a group).",
                     EditorStyles.miniLabel);
-                GUI.color = prevC;
             }
 
             r.y += Step; DrawLane(r, laneProp, property);
@@ -77,6 +74,7 @@ namespace TimelineSmash.Editor
             r.y += Step; EditorGUI.PropertyField(r, durProp);
             r.y += Step; EditorGUI.PropertyField(r, property.FindPropertyRelative("clipIn"));
             r.y += Step; EditorGUI.PropertyField(r, property.FindPropertyRelative("speed"));
+            r.y += Step; EditorGUI.PropertyField(r, property.FindPropertyRelative("spawnPrefab"));
 
             if (subTl != null)
             {
@@ -131,12 +129,9 @@ namespace TimelineSmash.Editor
                 .Select(t => BindingApplier.CandidateKeys(temp, t.name).First())
                 .ToList();
 
-            var prevC = GUI.color;
-            GUI.color = new Color(0.7f, 0.85f, 1f);
             EditorGUI.LabelField(r,
                 "Binds keys: " + (keys.Count == 0 ? "no bindable tracks" : string.Join(", ", keys)),
                 EditorStyles.miniLabel);
-            GUI.color = prevC;
         }
     }
 }
