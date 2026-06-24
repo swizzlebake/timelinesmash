@@ -73,6 +73,19 @@ Artists only ever edit **their own** sub-timelines and contributor file. The mas
 regenerable artifacts (gitignored). Two artists working in parallel merge cleanly because they
 changed different files; re-assembling produces the combined cinematic.
 
+### Nesting & grouping (0.2.0+)
+
+A segment can reference a **sub-composition** instead of a leaf sub-timeline, so cinematics nest to
+any depth. The assembler **flattens** the tree into one single-level master at assemble time, so the
+runtime never nests Control Tracks — there's no playback desync regardless of depth. A nested group's
+lanes **merge** into the parent when its lane is empty, or **namespace** (e.g. `Group/Camera`) when
+named.
+
+**Group → reusable unit:** the "Group all segments into a sub-composition" button (contributor
+inspector) extracts segments into a standalone group asset and references it in one place. Children
+are rebased so the result is identical — the group is just portable now, and can be referenced from
+other cinematics.
+
 ## Development
 
 This repository is itself a Unity project that embeds the package under

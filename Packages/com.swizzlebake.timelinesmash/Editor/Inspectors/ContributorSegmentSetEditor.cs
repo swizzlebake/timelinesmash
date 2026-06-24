@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.Timeline;
@@ -42,6 +43,35 @@ namespace TimelineSmash.Editor
 
                 EditorGUILayout.LabelField($"{set.segments.Count} segment(s)", EditorStyles.miniLabel);
             }
+
+            using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
+            {
+                EditorGUILayout.LabelField("Grouping", EditorStyles.boldLabel);
+                EditorGUILayout.LabelField(
+                    "Combine these segments into one reusable sub-composition (a movable group). " +
+                    "Flattening is unchanged — only the structure becomes portable.",
+                    EditorStyles.wordWrappedMiniLabel);
+
+                using (new EditorGUI.DisabledScope(set.segments.Count < 1))
+                {
+                    if (GUILayout.Button("Group all segments into a sub-composition"))
+                        GroupAll(set);
+                }
+            }
+        }
+
+        static void GroupAll(ContributorSegmentSet set)
+        {
+            var path = AssetDatabase.GetAssetPath(set);
+            var folder = string.IsNullOrEmpty(path) ? "Assets" : System.IO.Path.GetDirectoryName(path).Replace('\\', '/');
+            var indices = new List<int>();
+            for (int i = 0; i < set.segments.Count; i++)
+                indices.Add(i);
+
+            Undo.RecordObject(set, "Group segments");
+            var group = GroupingService.GroupSegments(set, indices, set.name + "_Group", folder);
+            if (group != null)
+                Selection.activeObject = group;
         }
 
         // Append after the latest existing segment end so quick-adds don't stack at 0.

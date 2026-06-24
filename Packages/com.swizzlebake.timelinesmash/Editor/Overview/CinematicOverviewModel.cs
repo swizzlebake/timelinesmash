@@ -4,8 +4,8 @@ using System.Collections.Generic;
 namespace TimelineSmash.Editor
 {
     /// <summary>
-    /// Read-only summary of a composition for inspector display and validation: lanes, placed
-    /// segments, total duration, and overlap/gap diagnostics. Pure (no asset side effects).
+    /// Read-only summary of a composition for inspector display and validation: lanes, placed leaves
+    /// (after flattening any nested sub-compositions), total duration, and overlap/gap diagnostics.
     /// </summary>
     public class CinematicOverviewModel
     {
@@ -43,14 +43,12 @@ namespace TimelineSmash.Editor
             if (composition == null)
                 return model;
 
-            var flat = CinematicAssembler.Flatten(composition);
+            var leaves = CinematicAssembler.FlattenTree(composition, model.warnings);
             var laneByName = new Dictionary<string, Lane>();
 
-            foreach (var sref in flat)
+            foreach (var leaf in leaves)
             {
-                var seg = sref.segment;
-                string laneName = CinematicAssembler.LaneOf(seg);
-
+                string laneName = string.IsNullOrEmpty(leaf.lane) ? "Main" : leaf.lane;
                 if (!laneByName.TryGetValue(laneName, out var lane))
                 {
                     lane = new Lane { name = laneName };
@@ -58,34 +56,25 @@ namespace TimelineSmash.Editor
                     model.lanes.Add(lane);
                 }
 
-                double dur = seg.duration > 0 ? seg.duration : 0;
                 var placed = new Placed
                 {
-                    owner = sref.owner,
-                    subTimelineName = seg.subTimeline != null ? seg.subTimeline.name : "<missing>",
-                    start = seg.start,
-                    end = seg.start + dur,
+                    owner = leaf.owner,
+                    subTimelineName = leaf.segment.subTimeline != null ? leaf.segment.subTimeline.name : "<missing>",
+                    start = leaf.start,
+                    end = leaf.start + (leaf.duration > 0 ? leaf.duration : 0),
                 };
 
-                // Overlap: any existing segment on this lane whose interval intersects.
                 foreach (var other in lane.segments)
                 {
                     if (placed.start < other.end && other.start < placed.end)
-                    {
                         lane.overlaps.Add(
                             $"'{placed.subTimelineName}' overlaps '{other.subTimelineName}' on lane '{laneName}'");
-                    }
                 }
 
                 lane.segments.Add(placed);
-
-                if (seg.subTimeline == null)
-                    model.warnings.Add($"Segment from '{sref.owner}' on lane '{laneName}' has no sub-timeline.");
-
                 model.totalDuration = Math.Max(model.totalDuration, placed.end);
             }
 
-            // Gaps: per lane, between consecutive segments ordered by start.
             foreach (var lane in model.lanes)
             {
                 lane.segments.Sort((a, b) => a.start.CompareTo(b.start));

@@ -12,10 +12,18 @@ namespace TimelineSmash
     [Serializable]
     public class SubTimelineSegment
     {
-        [Tooltip("The sub-timeline asset (.playable) this segment plays. Owned by one artist.")]
+        [Tooltip("The sub-timeline asset (.playable) this segment plays. Owned by one artist. " +
+                 "Set EITHER this OR Sub Composition.")]
         public TimelineAsset subTimeline;
 
-        [Tooltip("Lane to place this segment on. Segments sharing a lane become one master Control Track.")]
+        [Tooltip("A nested cinematic (group) to place here instead of a leaf sub-timeline. The group " +
+                 "is flattened into the master at assemble time (arbitrary nesting depth, no runtime " +
+                 "desync). Set EITHER this OR Sub Timeline.")]
+        public CinematicComposition subComposition;
+
+        [Tooltip("Lane to place this segment on. Segments sharing a lane become one master Control Track. " +
+                 "For a sub-composition: empty = merge the group's lanes into the parent; named = " +
+                 "namespace them under this lane (e.g. 'Group/Camera').")]
         public string laneName = "Main";
 
         [Tooltip("Optional binding-manifest key override. When empty, each sub-timeline track is " +

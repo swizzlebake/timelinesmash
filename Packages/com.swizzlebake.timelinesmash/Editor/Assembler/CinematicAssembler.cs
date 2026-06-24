@@ -8,75 +8,126 @@ using UnityEngine.Timeline;
 namespace TimelineSmash.Editor
 {
     /// <summary>
-    /// Generates the native master <see cref="TimelineAsset"/> for a cinematic from its
-    /// contributors' segments. The output is deterministic — identical inputs always yield the same
-    /// structure and exposed-reference names — so the generated master is a regenerable build
-    /// artifact that replaces hand-merging.
+    /// Generates the native master <see cref="TimelineAsset"/> for a cinematic. A composition may nest
+    /// sub-compositions to arbitrary depth; the assembler <b>flattens</b> the whole tree into one
+    /// single-level master at assemble time, so the runtime never nests Control Tracks (no desync).
+    /// Output is deterministic — identical inputs yield the same structure and exposed-reference names —
+    /// so the generated master is a regenerable build artifact that replaces hand-merging.
     /// </summary>
     public static class CinematicAssembler
     {
-        /// <summary>A flattened reference to one segment, carrying the data needed for a stable sort.</summary>
-        public struct SegmentRef
+        /// <summary>A leaf sub-timeline resolved to absolute master time after flattening the tree.</summary>
+        public struct LeafRef
         {
-            public SubTimelineSegment segment;
+            public SubTimelineSegment segment; // the leaf (has subTimeline + bindingKey)
             public string owner;
-            public int setIndex;
-            public int indexInSet;
+            public string lane;     // absolute lane (group-prefixed where applicable)
+            public double start;    // absolute master time
+            public double duration; // absolute
+            public double clipIn;
+            public double speed;    // absolute
+            public int emitOrder;   // stable deterministic tiebreak
         }
 
-        /// <summary>Flatten every contributor's segments into one deterministically-ordered list.
-        /// Null contributor sets and null segments are skipped.</summary>
-        public static List<SegmentRef> Flatten(CinematicComposition composition)
+        public static string LaneOf(SubTimelineSegment seg) =>
+            string.IsNullOrEmpty(seg.laneName) ? "Main" : seg.laneName;
+
+        /// <summary>Combine a parent lane prefix with a local lane. Empty prefix → pass-through (merge);
+        /// non-empty prefix → namespaced ("Group/Lane").</summary>
+        public static string Combine(string prefix, string lane)
         {
-            var list = new List<SegmentRef>();
-            if (composition == null || composition.contributors == null)
-                return list;
+            if (string.IsNullOrEmpty(prefix)) return string.IsNullOrEmpty(lane) ? "Main" : lane;
+            if (string.IsNullOrEmpty(lane)) return prefix;
+            return prefix + "/" + lane;
+        }
 
-            for (int c = 0; c < composition.contributors.Count; c++)
+        /// <summary>Recursively flatten a composition (which may nest sub-compositions) into
+        /// absolute-time leaf placements, accumulating start offset and speed scale down each path.
+        /// Cycles are detected and skipped with a warning.</summary>
+        public static List<LeafRef> FlattenTree(CinematicComposition root, List<string> warnings = null)
+        {
+            var output = new List<LeafRef>();
+            int emit = 0;
+            Recurse(root, 0.0, 1.0, "", new HashSet<CinematicComposition>(), output, warnings, ref emit);
+
+            output.Sort((a, b) =>
             {
-                var set = composition.contributors[c];
-                if (set == null || set.segments == null)
-                    continue;
+                int byLane = string.CompareOrdinal(a.lane, b.lane);
+                if (byLane != 0) return byLane;
+                int byStart = a.start.CompareTo(b.start);
+                if (byStart != 0) return byStart;
+                int byOwner = string.CompareOrdinal(a.owner ?? "", b.owner ?? "");
+                if (byOwner != 0) return byOwner;
+                return a.emitOrder.CompareTo(b.emitOrder);
+            });
+            return output;
+        }
 
-                string owner = string.IsNullOrEmpty(set.owner) ? set.name : set.owner;
-                for (int i = 0; i < set.segments.Count; i++)
+        static void Recurse(CinematicComposition comp, double baseStart, double scale, string lanePrefix,
+            HashSet<CinematicComposition> path, List<LeafRef> output, List<string> warnings, ref int emit)
+        {
+            if (comp == null)
+                return;
+            if (!path.Add(comp))
+            {
+                warnings?.Add($"Cycle detected: composition '{comp.name}' nests itself; skipped.");
+                return;
+            }
+            if (scale <= 0)
+                scale = 1;
+
+            if (comp.contributors != null)
+            {
+                foreach (var set in comp.contributors)
                 {
-                    var seg = set.segments[i];
-                    if (seg == null)
+                    if (set == null || set.segments == null)
                         continue;
-                    list.Add(new SegmentRef { segment = seg, owner = owner, setIndex = c, indexInSet = i });
+
+                    string owner = string.IsNullOrEmpty(set.owner) ? set.name : set.owner;
+
+                    foreach (var seg in set.segments)
+                    {
+                        if (seg == null)
+                            continue;
+
+                        double absStart = baseStart + seg.start / scale;
+                        string lane = Combine(lanePrefix, LaneOf(seg));
+
+                        if (seg.subComposition != null)
+                        {
+                            double childSpeed = seg.speed > 0 ? seg.speed : 1;
+                            // Named lane → namespace the group's lanes under it; empty → pass-through.
+                            string childPrefix = string.IsNullOrEmpty(seg.laneName) ? lanePrefix : lane;
+                            Recurse(seg.subComposition, absStart, scale * childSpeed, childPrefix, path, output, warnings, ref emit);
+                        }
+                        else if (seg.subTimeline != null)
+                        {
+                            output.Add(new LeafRef
+                            {
+                                segment = seg,
+                                owner = owner,
+                                lane = lane,
+                                start = absStart,
+                                duration = (seg.duration > 0 ? seg.duration : 0) / scale,
+                                clipIn = seg.clipIn > 0 ? seg.clipIn : 0,
+                                speed = (seg.speed > 0 ? seg.speed : 1) * scale,
+                                emitOrder = emit++,
+                            });
+                        }
+                        else
+                        {
+                            warnings?.Add($"Segment from '{owner}' has neither a sub-timeline nor a sub-composition; skipped.");
+                        }
+                    }
                 }
             }
 
-            list.Sort(CompareSegments);
-            return list;
+            path.Remove(comp);
         }
 
-        static int CompareSegments(SegmentRef a, SegmentRef b)
-        {
-            int byLane = string.CompareOrdinal(LaneOf(a.segment), LaneOf(b.segment));
-            if (byLane != 0) return byLane;
-
-            int byStart = a.segment.start.CompareTo(b.segment.start);
-            if (byStart != 0) return byStart;
-
-            int byOwner = string.CompareOrdinal(a.owner ?? "", b.owner ?? "");
-            if (byOwner != 0) return byOwner;
-
-            int bySet = a.setIndex.CompareTo(b.setIndex);
-            if (bySet != 0) return bySet;
-
-            return a.indexInSet.CompareTo(b.indexInSet);
-        }
-
-        public static string LaneOf(SubTimelineSegment seg)
-        {
-            return string.IsNullOrEmpty(seg.laneName) ? "Main" : seg.laneName;
-        }
-
-        /// <summary>Generate (or regenerate) the master timeline at <paramref name="masterPath"/>.
-        /// The asset is deleted and recreated from scratch — Timeline tracks/clips are sub-assets of
-        /// the .playable, so wholesale recreation avoids orphaned sub-assets.</summary>
+        /// <summary>Generate (or regenerate) the master timeline at <paramref name="masterPath"/> by
+        /// flattening the composition tree. The asset is deleted and recreated from scratch — Timeline
+        /// tracks/clips are sub-assets of the .playable, so wholesale recreation avoids orphans.</summary>
         public static AssembleResult BuildMaster(CinematicComposition composition, string masterPath)
         {
             if (string.IsNullOrEmpty(masterPath))
@@ -97,37 +148,25 @@ namespace TimelineSmash.Editor
                 ? composition.settings.frameRate
                 : 30.0;
 
-            var flat = Flatten(composition);
+            var leaves = FlattenTree(composition, result.warnings);
 
-            // Lane order = first appearance in the sorted list, so it is deterministic.
             var laneTracks = new Dictionary<string, ControlTrack>();
-            var laneOrder = new List<string>();
             double maxEnd = 0;
 
-            for (int gi = 0; gi < flat.Count; gi++)
+            for (int gi = 0; gi < leaves.Count; gi++)
             {
-                var sref = flat[gi];
-                var seg = sref.segment;
+                var leaf = leaves[gi];
+                string lane = string.IsNullOrEmpty(leaf.lane) ? "Main" : leaf.lane;
 
-                if (seg.subTimeline == null)
-                {
-                    result.warnings.Add(
-                        $"Segment {gi} from '{sref.owner}' has no sub-timeline assigned; skipped.");
-                    continue;
-                }
-
-                string lane = LaneOf(seg);
                 if (!laneTracks.TryGetValue(lane, out var track))
                 {
                     track = master.CreateTrack<ControlTrack>(null, lane);
                     laneTracks[lane] = track;
-                    laneOrder.Add(lane);
                 }
 
                 var clip = track.CreateClip<ControlPlayableAsset>();
                 var control = (ControlPlayableAsset)clip.asset;
 
-                // Drive only the nested director — no GameObject activation, particles, or ITimeControl.
                 control.updateDirector = true;
                 control.updateParticle = false;
                 control.updateITimeControl = false;
@@ -137,19 +176,19 @@ namespace TimelineSmash.Editor
                 string exposedName = $"TS_{gi:D4}";
                 control.sourceGameObject = new ExposedReference<GameObject> { exposedName = exposedName };
 
-                clip.start = seg.start;
-                clip.duration = seg.duration > 0 ? seg.duration : 0.0001;
-                clip.clipIn = seg.clipIn > 0 ? seg.clipIn : 0;
-                clip.timeScale = seg.speed > 0 ? seg.speed : 1;
-                clip.displayName = $"{seg.subTimeline.name} ({sref.owner})";
+                clip.start = leaf.start;
+                clip.duration = leaf.duration > 0 ? leaf.duration : 0.0001;
+                clip.clipIn = leaf.clipIn > 0 ? leaf.clipIn : 0;
+                clip.timeScale = leaf.speed > 0 ? leaf.speed : 1;
+                clip.displayName = $"{leaf.segment.subTimeline.name} ({leaf.owner})";
 
-                maxEnd = Math.Max(maxEnd, seg.start + clip.duration);
+                maxEnd = Math.Max(maxEnd, leaf.start + clip.duration);
 
                 result.entries.Add(new SegmentEntry
                 {
-                    segment = seg,
+                    segment = leaf.segment,
                     laneName = lane,
-                    laneIndex = laneOrder.IndexOf(lane),
+                    laneIndex = 0,
                     globalIndex = gi,
                     exposedName = exposedName,
                     clip = clip,
@@ -162,6 +201,8 @@ namespace TimelineSmash.Editor
 
             master.editorSettings.frameRate = fps;
 
+            // Persist via SaveAssets only. Do NOT ImportAsset here: a reimport destroys this in-memory
+            // TimelineAsset instance (and its sub-asset clips), leaving references the caller still needs.
             EditorUtility.SetDirty(master);
             AssetDatabase.SaveAssets();
 
