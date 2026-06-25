@@ -126,6 +126,14 @@ Binding is the step most likely to trip an artist, so several conveniences make 
   the manifest doesn't resolve falls back to a scene GameObject of that **name** — so naming an actor after a
   track is enough, no manifest entry required.
 
+### Visual timeline (0.10.0+)
+
+`Window ▸ TimelineSmash ▸ Cinematic Timeline` (or **Open visual timeline** on the composition inspector)
+opens an interactive lane×time view of the selected composition's segments. Drag a bar to move its start,
+drag its right edge to resize — both snap to frames and are undoable. Zoom / Fit / Snap and a one-click
+Assemble are in the toolbar; double-click a bar to ping its contributor. Lane changes and the rest of a
+segment's fields stay on the contributor inspector.
+
 ## Development
 
 This repository is itself a Unity project that embeds the package under

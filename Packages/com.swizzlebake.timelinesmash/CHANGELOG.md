@@ -4,6 +4,17 @@ All notable changes to this package are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.10.0] - 2026-06-25
+
+### Added
+- **Visual timeline window** (`Window ▸ TimelineSmash ▸ Cinematic Timeline`, or "Open visual timeline" on
+  the composition inspector). An interactive lane×time view of a composition's direct segments: drag a bar
+  to move its start, drag its right edge to resize the duration — both snap to frames and are undoable.
+  Toolbar has zoom / fit / snap toggle and a one-click Assemble; double-click a bar pings its contributor
+  set. Lane reassignment and other fields remain on the contributor inspector (which has the lane dropdown).
+  The edit model (`CinematicTimelineModel`, pairing each bar with its owning set + segment) and frame
+  snapping (`TimelineSnap`) are unit-tested; the window renders them.
+
 ## [0.9.0] - 2026-06-24
 
 ### Added

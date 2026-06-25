@@ -29,14 +29,19 @@ namespace TimelineSmash.Editor
             using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
             {
                 EditorGUILayout.LabelField("Author", EditorStyles.boldLabel);
-                if (GUILayout.Button("Add contributor"))
+                using (new EditorGUILayout.HorizontalScope())
                 {
-                    var set = CinematicScaffold.AddContributor(comp, "New Artist");
-                    if (set != null)
+                    if (GUILayout.Button("Add contributor"))
                     {
-                        Selection.activeObject = set;
-                        EditorGUIUtility.PingObject(set);
+                        var set = CinematicScaffold.AddContributor(comp, "New Artist");
+                        if (set != null)
+                        {
+                            Selection.activeObject = set;
+                            EditorGUIUtility.PingObject(set);
+                        }
                     }
+                    if (GUILayout.Button("Open visual timeline"))
+                        CinematicTimelineWindow.Open(comp);
                 }
             }
 
