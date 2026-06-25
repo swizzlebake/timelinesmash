@@ -4,6 +4,17 @@ All notable changes to this package are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.10.1] - 2026-06-25
+
+### Fixed
+- **Recording play-mode flow.** Record threw "you can only call the PrepareRecording method in PlayMode"
+  (it prepared/started the `RecorderController` in Edit Mode) and, if clicked during Play, "this cannot be
+  used during play mode" (it opened the stage scene while playing). Record now **arms** in Edit Mode — opens
+  the stage scene and remembers the composition — then enters Play Mode; the controller is prepared and
+  started in the `EnteredPlayMode` callback, auto-stops at the last frame and leaves Play Mode (a manual
+  capture stops when you exit Play Mode). Clicking Record while already in Play Mode now warns instead of
+  throwing.
+
 ## [0.10.0] - 2026-06-25
 
 ### Added
