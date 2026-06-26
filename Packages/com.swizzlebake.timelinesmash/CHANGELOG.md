@@ -4,6 +4,19 @@ All notable changes to this package are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.11.0] - 2026-06-26
+
+### Added
+- **Self-contained, recordable stage scenes.** A composition can now name a **Stage source scene** and/or a
+  **Stage actor prefab** (new fields on the composition inspector's Assemble section). On Assemble, the
+  generated `<Name>_Stage.unity` is built from them — the source scene is cloned as the stage's base
+  (shipping its actors, lighting and camera) and/or the prefab is instantiated at the stage root. Bindings
+  resolve against those actors **by name** (a manifest entry still wins). Previously the generated stage held
+  only the master + host directors, so Record captured an empty scene unless every segment spawned a prefab;
+  now the stage carries the real, animatable actors and plays/records on its own. With neither field set the
+  behaviour is unchanged (director-only stage). The source scene is cloned to a copy, never edited in place,
+  so the stage stays fully regenerable.
+
 ## [0.10.1] - 2026-06-25
 
 ### Fixed

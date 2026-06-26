@@ -1,4 +1,5 @@
 using System.IO;
+using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine.SceneManagement;
 
@@ -32,6 +33,16 @@ namespace TimelineSmash.Editor
         public static string StagePath(CinematicComposition c) => $"{OutputFolder(c)}/{SafeName(c)}_Stage.unity";
         public static string BindingsPath(CinematicComposition c) => $"{OutputFolder(c)}/{SafeName(c)}_Bindings.asset";
 
+        /// <summary>Project path of the scene cloned as the generated stage's base, or null when none is set
+        /// (or the stored GUID no longer resolves).</summary>
+        public static string StageSourceScenePath(CinematicComposition c)
+        {
+            if (c == null || string.IsNullOrEmpty(c.stageSourceSceneGuid))
+                return null;
+            var path = AssetDatabase.GUIDToAssetPath(c.stageSourceSceneGuid);
+            return string.IsNullOrEmpty(path) ? null : path;
+        }
+
         /// <summary>Build the master timeline and, optionally, the stage scene. Returns the result,
         /// or null if the user cancelled the scene-save prompt before the stage build.</summary>
         public static AssembleResult Assemble(CinematicComposition composition, bool buildStage)
@@ -50,7 +61,10 @@ namespace TimelineSmash.Editor
                 if (!EditorSceneManager.SaveCurrentModifiedScenesIfUserWantsTo())
                     return result; // user cancelled; master is still generated
 
-                StageSceneBuilder.BuildStage(result, compiled, StagePath(composition));
+                // Populate the stage from the composition's source scene / actor prefab when set, so the
+                // generated stage carries real actors and can be recorded on its own.
+                StageSceneBuilder.BuildStage(result, compiled, StagePath(composition),
+                    StageSourceScenePath(composition), composition.stageActorPrefab);
             }
 
             return result;

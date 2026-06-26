@@ -23,16 +23,38 @@ namespace TimelineSmash.Editor
     /// </summary>
     public static class StageSceneBuilder
     {
-        /// <summary>Create a fresh single scene, populate it, and save it to <paramref name="scenePath"/>.</summary>
-        public static StageBuildResult BuildStage(AssembleResult result, CompiledBindings bindings, string scenePath)
+        /// <summary>Create the stage scene, populate it with the master + host directors, and save it to
+        /// <paramref name="scenePath"/>. By default the scene starts empty (directors only). Pass
+        /// <paramref name="sourceScenePath"/> to clone an existing scene as the stage's base (shipping its
+        /// actors, lighting and camera) and/or <paramref name="actorPrefab"/> to instantiate a prefab at the
+        /// stage root — either makes the stage self-contained and recordable. When actors are brought in this
+        /// way, bindings resolve against them by name (a manifest entry still wins; see
+        /// <see cref="BindingApplier"/>).</summary>
+        public static StageBuildResult BuildStage(AssembleResult result, CompiledBindings bindings, string scenePath,
+            string sourceScenePath = null, GameObject actorPrefab = null)
         {
             EditorAssetUtil.EnsureFolder(Path.GetDirectoryName(scenePath));
 
-            var scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
-            var build = Populate(scene, result, bindings);
+            // Use a source scene as the stage's base when one is set (and isn't the stage itself). We open the
+            // source and later save it *to the stage path* (a Save As) — the source file on disk is never
+            // touched, and the generated stage stays fully regenerable.
+            bool cloneScene = !string.IsNullOrEmpty(sourceScenePath)
+                              && sourceScenePath != scenePath
+                              && File.Exists(sourceScenePath);
+
+            Scene scene = cloneScene
+                ? EditorSceneManager.OpenScene(sourceScenePath, OpenSceneMode.Single)
+                : EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
+
+            if (actorPrefab != null)
+                PrefabUtility.InstantiatePrefab(actorPrefab, scene);
+
+            // With real actors present, let unmatched binding keys fall back to scene GameObjects by name.
+            bool haveActors = cloneScene || actorPrefab != null;
+            var build = Populate(scene, result, bindings, resolveBySceneName: haveActors);
 
             EditorSceneManager.MarkSceneDirty(scene);
-            EditorSceneManager.SaveScene(scene, scenePath);
+            EditorSceneManager.SaveScene(scene, scenePath); // Save As to the stage path; source left untouched
             return build;
         }
 

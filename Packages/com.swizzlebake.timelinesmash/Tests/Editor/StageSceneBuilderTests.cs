@@ -82,5 +82,69 @@ namespace TimelineSmash.Tests
             StageSceneBuilder.BuildStage(result, null, StagePath);
             Assert.IsTrue(System.IO.File.Exists(StagePath));
         }
+
+        // One contributor whose sub-timeline has a single AnimationTrack named after the actor, so the
+        // track's binding key is the actor name and resolves by-name against a populated stage.
+        AssembleResult AssembleNamedActor(string actorName)
+        {
+            var sub = TestAssets.CreateSubTimeline("Shot", actorName);
+            var owner = TestAssets.CreateContributor("Alice", new[] { TestAssets.Seg(sub, "Characters", 0, 5) });
+            var comp = TestAssets.CreateComposition("Cine", null, owner);
+            return CinematicAssembler.BuildMaster(comp, MasterPath);
+        }
+
+        [Test]
+        public void BuildStage_WithActorPrefab_InstantiatesActorAndBindsByName()
+        {
+            var result = AssembleNamedActor("Alice");
+            var actor = TestAssets.CreatePrefab("Alice", withAnimator: true);
+
+            var build = StageSceneBuilder.BuildStage(result, null, StagePath, null, actor);
+
+            // The prefab was instantiated into the generated stage scene…
+            var names = build.masterDir.gameObject.scene.GetRootGameObjects().Select(g => g.name).ToList();
+            CollectionAssert.Contains(names, "Alice");
+
+            // …and the segment's track bound to its Animator by name, with no manifest.
+            var track = result.entries[0].segment.subTimeline.GetOutputTracks().First();
+            var bound = build.hosts[0].GetGenericBinding(track);
+            Assert.IsInstanceOf<Animator>(bound);
+            Assert.AreEqual("Alice", ((Animator)bound).gameObject.name);
+        }
+
+        [Test]
+        public void BuildStage_WithSourceScene_ClonesActorsIntoStageAndBindsByName()
+        {
+            // A source scene containing a named actor with an Animator, saved under the test root.
+            var src = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
+            new GameObject("Alice").AddComponent<Animator>();
+            var srcPath = TestAssets.Root + "/Source.unity";
+            EditorSceneManager.SaveScene(src, srcPath);
+
+            var result = AssembleNamedActor("Alice");
+
+            var build = StageSceneBuilder.BuildStage(result, null, StagePath, srcPath, null);
+
+            // Saved to the stage path (the source is left untouched) and carries the cloned actor.
+            Assert.AreEqual(StagePath, build.masterDir.gameObject.scene.path);
+            var names = build.masterDir.gameObject.scene.GetRootGameObjects().Select(g => g.name).ToList();
+            CollectionAssert.Contains(names, "Alice");
+            CollectionAssert.Contains(names, "Cinematic_Master");
+
+            var track = result.entries[0].segment.subTimeline.GetOutputTracks().First();
+            Assert.IsInstanceOf<Animator>(build.hosts[0].GetGenericBinding(track));
+        }
+
+        [Test]
+        public void BuildStage_NoSource_LeavesStageActorsAbsent()
+        {
+            var result = AssembleNamedActor("Alice");
+
+            var build = StageSceneBuilder.BuildStage(result, null, StagePath);
+
+            // Director-only stage: just the master root, no actor named "Alice".
+            var names = build.masterDir.gameObject.scene.GetRootGameObjects().Select(g => g.name).ToList();
+            CollectionAssert.DoesNotContain(names, "Alice");
+        }
     }
 }

@@ -49,6 +49,8 @@ namespace TimelineSmash.Editor
             {
                 EditorGUILayout.LabelField("Assemble", EditorStyles.boldLabel);
 
+                DrawStageSource(comp);
+
                 if (GUILayout.Button("Assemble (master + stage)", GUILayout.Height(26)))
                     Report(CinematicAssembleService.Assemble(comp, true));
 
@@ -139,6 +141,44 @@ namespace TimelineSmash.Editor
 
             if (EditorSceneManager.SaveCurrentModifiedScenesIfUserWantsTo())
                 EditorSceneManager.OpenScene(path, OpenSceneMode.Single);
+        }
+
+        // Stage source: a scene and/or prefab the generated stage is populated from, so it ships real
+        // actors and can be played/recorded on its own (otherwise it holds only directors). The scene
+        // reference is stored as a GUID on the composition; the prefab is a direct GameObject reference.
+        // Both composition fields are [HideInInspector] so they're drawn here as proper object pickers.
+        void DrawStageSource(CinematicComposition comp)
+        {
+            var scenePath = AssetDatabase.GUIDToAssetPath(comp.stageSourceSceneGuid ?? "");
+            var sceneAsset = string.IsNullOrEmpty(scenePath)
+                ? null : AssetDatabase.LoadAssetAtPath<SceneAsset>(scenePath);
+
+            EditorGUI.BeginChangeCheck();
+            var newScene = (SceneAsset)EditorGUILayout.ObjectField(
+                new GUIContent("Stage source scene",
+                    "Optional. Cloned as the base of the generated stage so it ships real actors, lighting " +
+                    "and camera. Bindings resolve against its objects by name."),
+                sceneAsset, typeof(SceneAsset), false);
+            var newPrefab = (GameObject)EditorGUILayout.ObjectField(
+                new GUIContent("Stage actor prefab",
+                    "Optional. Instantiated at the stage root. Bindings resolve against it by name. " +
+                    "Combines with the source scene if both are set."),
+                comp.stageActorPrefab, typeof(GameObject), false);
+            if (EditorGUI.EndChangeCheck())
+            {
+                Undo.RecordObject(comp, "Set stage source");
+                comp.stageSourceSceneGuid = newScene != null
+                    ? AssetDatabase.AssetPathToGUID(AssetDatabase.GetAssetPath(newScene)) : "";
+                comp.stageActorPrefab = newPrefab;
+                EditorUtility.SetDirty(comp);
+            }
+
+            if (sceneAsset == null && comp.stageActorPrefab == null)
+                EditorGUILayout.HelpBox(
+                    "Set a source scene or actor prefab to populate the generated stage with real actors so " +
+                    "it can be played and recorded. Without one, the stage holds only directors — it records " +
+                    "nothing unless every segment spawns a prefab.",
+                    MessageType.None);
         }
 
         void DrawOverview(CinematicComposition comp)

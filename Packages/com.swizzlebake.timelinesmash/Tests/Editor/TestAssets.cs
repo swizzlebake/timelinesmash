@@ -91,11 +91,15 @@ namespace TimelineSmash.Tests
             return comp;
         }
 
-        /// <summary>A throwaway prefab asset under the test root (used by spawn-prefab tests).</summary>
-        public static GameObject CreatePrefab(string name)
+        /// <summary>A throwaway prefab asset under the test root (used by spawn-prefab and stage-source tests).
+        /// With <paramref name="withAnimator"/> the root carries an Animator so an AnimationTrack can bind to
+        /// it by name.</summary>
+        public static GameObject CreatePrefab(string name, bool withAnimator = false)
         {
             EnsureRoot();
             var go = new GameObject(name);
+            if (withAnimator)
+                go.AddComponent<Animator>();
             var prefab = PrefabUtility.SaveAsPrefabAsset(go, $"{Root}/{name}.prefab");
             Object.DestroyImmediate(go);
             return prefab;
