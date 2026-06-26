@@ -4,7 +4,8 @@
     "references": [
         "TimelineSmash.Runtime",
         "TimelineSmash.Editor",
-        "Unity.Recorder.Editor"
+        "Unity.Recorder.Editor",
+        "Unity.Timeline"
     ],
     "includePlatforms": [
         "Editor"

@@ -4,6 +4,22 @@ All notable changes to this package are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.12.0] - 2026-06-26
+
+### Added
+- **Record encodes a video on macOS/Windows.** A new `CaptureSettings.output` option
+  (`ImageSequence` / `Video` / `ImageSequenceAndVideo`, **default `Video`**) makes Record emit a
+  **ProRes 422 HQ** `.mov` (with stereo audio) as part of the record pass. ProRes — not H.264, which Unity
+  Recorder caps at 4K — so the video matches the 4K/6K/8K master resolution. Linux has no platform ProRes
+  encoder, so a video request there falls back to the high-res PNG/EXR image sequence (encode it yourself
+  with ffmpeg); choose `ImageSequenceAndVideo` to get both on macOS/Windows.
+
+### Changed
+- **Record length auto-fills.** When a composition's `Total Duration` is left at 0, Record now derives the
+  frame range from the assembled master timeline's own duration (the latest segment's end) instead of
+  silently dropping into manual mode — so a single Record captures the whole cinematic without typing the
+  length. An empty/absent master still falls back to manual mode.
+
 ## [0.11.0] - 2026-06-26
 
 ### Added

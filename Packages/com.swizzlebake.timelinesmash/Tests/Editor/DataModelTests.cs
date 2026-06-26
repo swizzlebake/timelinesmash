@@ -86,6 +86,7 @@ namespace TimelineSmash.Tests
             Assert.AreEqual(CaptureImageFormat.PNG, c.format);
             Assert.AreEqual(1, c.supersample);
             Assert.AreEqual("MainCamera", c.cameraTag);
+            Assert.AreEqual(CaptureOutput.Video, c.output);
         }
     }
 }
