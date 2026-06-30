@@ -74,5 +74,8 @@ crashlytics-build.properties
 # TimelineSmash regenerable assemble artifacts (master timeline + stage scene are
 # always rebuilt from the committed contributor/composition assets — never hand-merged)
 /[Aa]ssets/Cinematics/Generated/
+# TimelineSmash elaborate-demo regenerable output (rebuilt by the "Build Elaborate
+# Demo Scene" menu command — see Assets/TimelineSmashDemo/FINDINGS.md)
+/[Aa]ssets/TimelineSmashDemo/Generated/
 # TimelineSmash automated-test scratch assets
 /[Aa]ssets/__TimelineSmashTests__/
