@@ -64,7 +64,7 @@ Pure-logic tests (flatten, binding compile, grouping) build assets in memory wit
 ## Conventions & gotchas
 
 - **Force Text serialization is required** (mergeable `.playable`/`.asset`/`.unity`) — `EditorSettings`
-  `m_SerializationMode: 1`. Keep it.
+  `m_SerializationMode: 2`. Keep it.
 - **Commit `.meta` files** for everything in the package (asmdef GUIDs etc.).
 - **Freshly-created `TimelineAsset` instances go fake-null** after `AssetDatabase.ImportAsset` or a scene
   save — the managed instance is destroyed. Reload via `AssetDatabase.LoadAssetAtPath`, never trust a
