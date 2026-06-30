@@ -4,6 +4,24 @@ All notable changes to this package are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.13.0] - 2026-06-27
+
+### Changed
+- **Lowered the minimum Unity to 2021.3 LTS** (from 6000.3). The package only ever needed a handful of
+  modern APIs; the rest is long-standing Timeline/IMGUI/AssetDatabase surface available since 2018–2019.
+  The required Timeline dependency floor drops accordingly to **`com.unity.timeline` 1.6.1** — the oldest
+  Timeline that has both `TimelineAsset.editorSettings.frameRate` (1.6.1) and
+  `TimelineEditor.GetOrCreateWindow()` / `TimelineEditorWindow.SetTimeline()` (1.5.2), the two newest
+  APIs the assembler and inspectors use. Package resolution still picks the editor's bundled Timeline
+  (1.6.x on 2021.3, 1.8.x on Unity 6), so nothing changes on newer editors.
+
+### Fixed
+- **Optional Recorder export no longer breaks compilation on older Recorder.** The export assembly's
+  `versionDefines` expression was empty, so `TIMELINESMASH_RECORDER` switched on for *any* installed
+  Recorder — but the export code uses the scripted ProRes `Encoder` API (`ProResEncoderSettings`) that
+  only exists in **Recorder 4.0.0+**. The expression is now `[4.0.0,)`, so on Recorder 3.x the export
+  path is cleanly absent (as an optional feature should be) instead of a hard compile error.
+
 ## [0.12.0] - 2026-06-26
 
 ### Added

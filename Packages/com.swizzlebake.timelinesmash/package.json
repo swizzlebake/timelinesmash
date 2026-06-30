@@ -1,9 +1,9 @@
 {
   "name": "com.swizzlebake.timelinesmash",
-  "version": "0.12.0",
+  "version": "0.13.0",
   "displayName": "TimelineSmash",
   "description": "Collaborative cinematic assembly for Unity Timeline. Each artist authors isolated sub-timelines in their own files; a deterministic assembler bakes them into a native master Timeline (plus a regenerable stage scene) so teams build long, intricate cinematics together without merge conflicts. Bindings to shared scene actors live in a manifest, not in the scene.",
-  "unity": "6000.3",
+  "unity": "2021.3",
   "documentationUrl": "https://github.com/swizzlebake/timelinesmash",
   "changelogUrl": "https://github.com/swizzlebake/timelinesmash/blob/main/Packages/com.swizzlebake.timelinesmash/CHANGELOG.md",
   "licensesUrl": "https://github.com/swizzlebake/timelinesmash/blob/main/Packages/com.swizzlebake.timelinesmash/LICENSE.md",
@@ -20,7 +20,7 @@
     "email": "swizzlebake@gmail.com"
   },
   "dependencies": {
-    "com.unity.timeline": "1.8.12"
+    "com.unity.timeline": "1.6.1"
   },
   "samples": [
     {

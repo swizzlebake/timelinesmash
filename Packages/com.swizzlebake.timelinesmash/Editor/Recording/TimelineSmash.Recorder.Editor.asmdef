@@ -21,7 +21,7 @@
     "versionDefines": [
         {
             "name": "com.unity.recorder",
-            "expression": "",
+            "expression": "[4.0.0,)",
             "define": "TIMELINESMASH_RECORDER"
         }
     ],

@@ -82,7 +82,8 @@ Pure-logic tests (flatten, binding compile, grouping) build assets in memory wit
 
 Bump `Packages/com.swizzlebake.timelinesmash/package.json` `version`, add a `CHANGELOG.md` entry, commit,
 then `git tag -a X.Y.Z -m "…"` and push the tag. Consumers pin with `#X.Y.Z` on the git URL. Current
-latest: **0.3.0**.
+latest: **0.13.0**. Minimum editor: **Unity 2021.3 LTS** (`com.unity.timeline` ≥ 1.6.1; optional
+Recorder export needs `com.unity.recorder` ≥ 4.0.0).
 
 ## Git
 
