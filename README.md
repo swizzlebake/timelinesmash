@@ -39,8 +39,8 @@ Or add to `Packages/manifest.json`:
 "com.swizzlebake.timelinesmash": "https://github.com/swizzlebake/timelinesmash.git?path=Packages/com.swizzlebake.timelinesmash"
 ```
 
-Pin a version by appending a git tag, e.g. `#0.12.0`. Requires Unity **6000.3+** and
-`com.unity.timeline` **1.8.12+**; `com.unity.recorder` is optional and enables video / image-sequence
+Pin a version by appending a git tag, e.g. `#0.13.0`. Requires Unity **2021.3+** and
+`com.unity.timeline` **1.6.1+**; `com.unity.recorder` is optional and enables video / image-sequence
 export.
 
 ## Concepts

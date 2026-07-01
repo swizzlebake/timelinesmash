@@ -156,6 +156,84 @@ namespace TimelineSmash.Tests
         }
 
         [Test]
+        public void BuildMaster_OverlappingSegmentsOnSameLane_Warns()
+        {
+            var alice = TestAssets.CreateContributor("Alice", new[]
+            {
+                TestAssets.Seg(_a, "Main", 0, 5),
+            });
+            var bob = TestAssets.CreateContributor("Bob", new[]
+            {
+                TestAssets.Seg(_b, "Main", 3, 5), // starts before Alice's ends → overlap on lane "Main"
+            });
+            var comp = TestAssets.CreateComposition("Cine", null, alice, bob);
+
+            var result = CinematicAssembler.BuildMaster(comp, MasterPath);
+
+            Assert.AreEqual(2, result.entries.Count);
+            Assert.IsTrue(result.warnings.Any(w => w.Contains("overlaps")),
+                "Expected an overlap warning; got: " + string.Join(" | ", result.warnings));
+        }
+
+        [Test]
+        public void BuildMaster_TouchingSegmentsOnSameLane_DoNotWarn()
+        {
+            var alice = TestAssets.CreateContributor("Alice", new[]
+            {
+                TestAssets.Seg(_a, "Main", 0, 5),
+                TestAssets.Seg(_b, "Main", 5, 5), // starts exactly where the previous ends → no overlap
+            });
+            var comp = TestAssets.CreateComposition("Cine", null, alice);
+
+            var result = CinematicAssembler.BuildMaster(comp, MasterPath);
+
+            Assert.IsFalse(result.warnings.Any(w => w.Contains("overlaps")),
+                "Touching (end == next start) must not count as an overlap.");
+        }
+
+        [Test]
+        public void BuildMaster_DifferentLanes_DoNotWarnOnOverlap()
+        {
+            // Same times, different lanes → no conflict.
+            var result = CinematicAssembler.BuildMaster(TwoLaneComposition(), MasterPath);
+            Assert.IsFalse(result.warnings.Any(w => w.Contains("overlaps")));
+        }
+
+        [Test]
+        public void BuildMaster_UnsetDuration_AutoFillsFromSubTimelineLength()
+        {
+            var animated = TestAssets.CreateAnimatedSubTimeline("Shot"); // one 0..1 clip → duration ~1
+            double expected = animated.duration; // capture before BuildMaster (SaveAssets can fake-null it)
+            Assume.That(expected, Is.GreaterThan(0));
+
+            var alice = TestAssets.CreateContributor("Alice", new[]
+            {
+                TestAssets.Seg(animated, "Main", 0, 0), // duration 0 → "play the whole shot"
+            });
+            var comp = TestAssets.CreateComposition("Cine", null, alice);
+
+            var result = CinematicAssembler.BuildMaster(comp, MasterPath);
+
+            Assert.AreEqual(1, result.entries.Count);
+            Assert.AreEqual(expected, result.entries[0].clip.duration, 1e-6);
+        }
+
+        [Test]
+        public void BuildMaster_ExplicitDuration_OverridesSubTimelineLength()
+        {
+            var animated = TestAssets.CreateAnimatedSubTimeline("Shot"); // natural length ~1
+            var alice = TestAssets.CreateContributor("Alice", new[]
+            {
+                TestAssets.Seg(animated, "Main", 0, 4), // explicit 4 wins over the auto length
+            });
+            var comp = TestAssets.CreateComposition("Cine", null, alice);
+
+            var result = CinematicAssembler.BuildMaster(comp, MasterPath);
+
+            Assert.AreEqual(4, result.entries[0].clip.duration, 1e-6);
+        }
+
+        [Test]
         public void BuildMaster_IsDeterministic()
         {
             var comp = TwoLaneComposition();

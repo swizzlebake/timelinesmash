@@ -102,13 +102,20 @@ namespace TimelineSmash.Editor
                         }
                         else if (seg.subTimeline != null)
                         {
+                            // A segment with no explicit duration (<= 0) plays its whole sub-timeline:
+                            // fall back to the sub-timeline's own length so artists don't have to retype
+                            // each shot's duration by hand. (An empty sub-timeline reports 0 → still 0.)
+                            double srcDuration = seg.duration > 0
+                                ? seg.duration
+                                : (seg.subTimeline.duration > 0 ? seg.subTimeline.duration : 0);
+
                             output.Add(new LeafRef
                             {
                                 segment = seg,
                                 owner = owner,
                                 lane = lane,
                                 start = absStart,
-                                duration = (seg.duration > 0 ? seg.duration : 0) / scale,
+                                duration = srcDuration / scale,
                                 clipIn = seg.clipIn > 0 ? seg.clipIn : 0,
                                 speed = (seg.speed > 0 ? seg.speed : 1) * scale,
                                 emitOrder = emit++,
@@ -123,6 +130,52 @@ namespace TimelineSmash.Editor
             }
 
             path.Remove(comp);
+        }
+
+        /// <summary>Same-lane time overlaps in a flattened leaf list — the cross-contributor "logical
+        /// conflict" TimelineSmash exists to catch (two artists stacking shots on one lane). Returns one
+        /// human-readable warning per overlapping pair. Segments that merely touch (end == next start)
+        /// do not count. Fed into the assemble result so the conflict is reported at assemble time, not
+        /// only in the inspector overview.</summary>
+        public static List<string> OverlapWarnings(List<LeafRef> leaves)
+        {
+            var warnings = new List<string>();
+            if (leaves == null)
+                return warnings;
+
+            var byLane = new Dictionary<string, List<LeafRef>>();
+            foreach (var leaf in leaves)
+            {
+                string lane = string.IsNullOrEmpty(leaf.lane) ? "Main" : leaf.lane;
+                if (!byLane.TryGetValue(lane, out var list))
+                    byLane[lane] = list = new List<LeafRef>();
+                list.Add(leaf);
+            }
+
+            foreach (var kv in byLane)
+            {
+                var list = kv.Value;
+                for (int i = 0; i < list.Count; i++)
+                    for (int j = i + 1; j < list.Count; j++)
+                    {
+                        var a = list[i];
+                        var b = list[j];
+                        double aEnd = a.start + (a.duration > 0 ? a.duration : 0);
+                        double bEnd = b.start + (b.duration > 0 ? b.duration : 0);
+                        if (a.start < bEnd && b.start < aEnd)
+                            warnings.Add($"Lane '{kv.Key}': '{NameOf(a)}' overlaps '{NameOf(b)}'.");
+                    }
+            }
+
+            return warnings;
+        }
+
+        static string NameOf(LeafRef leaf)
+        {
+            string shot = leaf.segment != null && leaf.segment.subTimeline != null
+                ? leaf.segment.subTimeline.name
+                : "<missing>";
+            return string.IsNullOrEmpty(leaf.owner) ? shot : $"{shot} ({leaf.owner})";
         }
 
         /// <summary>Generate (or regenerate) the master timeline at <paramref name="masterPath"/> by
@@ -149,6 +202,7 @@ namespace TimelineSmash.Editor
                 : 30.0;
 
             var leaves = FlattenTree(composition, result.warnings);
+            result.warnings.AddRange(OverlapWarnings(leaves));
 
             var laneTracks = new Dictionary<string, ControlTrack>();
             double maxEnd = 0;
