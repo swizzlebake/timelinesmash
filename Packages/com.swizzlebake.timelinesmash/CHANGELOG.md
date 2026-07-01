@@ -4,7 +4,20 @@ All notable changes to this package are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.13.0] - 2026-06-27
+## [Unreleased]
+
+### Added
+- **Assemble now reports same-lane overlaps.** When two segments on the same lane overlap in time —
+  the cross-contributor "logical conflict" TimelineSmash exists to catch — `BuildMaster` adds a warning
+  per overlapping pair to the assemble result, so the conflict surfaces in the post-Assemble summary
+  instead of only in the inspector overview. Segments that merely touch (one ends where the next begins)
+  are not flagged.
+
+### Changed
+- **A segment with no explicit duration plays its whole sub-timeline.** When a segment's `duration` is
+  left at 0 (or negative), the assembler now fills it from the sub-timeline's own length instead of
+  collapsing the clip to a near-zero sliver. An explicit duration still wins; an empty sub-timeline
+  (length 0) is unchanged.
 
 ### Changed
 - **Lowered the minimum Unity to 2021.3 LTS** (from 6000.3). The package only ever needed a handful of
