@@ -4,6 +4,13 @@ All notable changes to this package are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Changed
+- The Cinematic Composition binding overview now previews name-based resolution against the active scene,
+  marks compatible scene matches green, identifies manifest versus scene-name matches, and verifies that a
+  same-named GameObject contains the component type required by its Timeline track.
+
 ## [0.14.0] - 2026-08-08
 
 ### Added

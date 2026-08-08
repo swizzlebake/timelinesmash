@@ -123,8 +123,10 @@ Binding is the step most likely to trip an artist, so several conveniences make 
 
 - **Bindings checklist** *(0.6.0)* — the Cinematic Composition inspector lists every track across all
   contributors that needs an actor, shows whether it resolves (and to what) or is unresolved with the exact
-  key to author, and offers **Create & assign manifest** / **Add N missing key(s)**. No more hunting through
-  `.playable`s by hand or debugging silent failures after assemble.
+  key to author, and offers **Create & assign manifest** / **Add N missing key(s)**. It also previews the
+  active scene's name-based fallback, marking a row green only when the matching GameObject has the component
+  type required by that track, and labels whether the match came from the manifest or the scene. No more
+  hunting through `.playable`s by hand or debugging silent failures after assemble.
 - **Per-track retargeting** *(0.5.0)* — reuse one multi-track sub-timeline for different actors by setting a
   per-segment **Binding Key** and authoring keys like `hero/Body`, `hero/Voice`. A bare key still binds the
   whole sub-timeline (backwards compatible).

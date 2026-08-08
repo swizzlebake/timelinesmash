@@ -4,6 +4,7 @@ using NUnit.Framework;
 using TimelineSmash.Editor;
 using UnityEditor;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using UnityEngine.Timeline;
 
 namespace TimelineSmash.Tests
@@ -142,6 +143,71 @@ namespace TimelineSmash.Tests
             Assert.AreEqual(3, plan.Total);
             Assert.AreEqual(0, plan.Bound);
             Assert.AreEqual(3, plan.Missing);
+        }
+
+        [Test]
+        public void Build_WithActiveScene_ResolvesNamedActorsWithRequiredComponents()
+        {
+            var body = Actor("Body").AddComponent<Animator>();
+            var voice = Actor("Voice").AddComponent<AudioSource>();
+            var prop = Actor("Prop");
+            var comp = MultiTrackComp(null);
+
+            var plan = BindingPlan.Build(comp, SceneManager.GetActiveScene());
+
+            Assert.AreEqual(3, plan.Bound);
+            Assert.AreEqual(3, plan.SceneBound);
+            Assert.AreSame(body, plan.requirements.Single(r => r.trackName == "Body").target);
+            Assert.AreSame(voice, plan.requirements.Single(r => r.trackName == "Voice").target);
+            Assert.AreSame(prop, plan.requirements.Single(r => r.trackName == "Prop").target);
+            Assert.IsTrue(plan.requirements.All(r => r.resolvedBySceneName));
+        }
+
+        [Test]
+        public void Build_WithActiveScene_NameWithoutRequiredComponentStaysUnresolved()
+        {
+            Actor("Body"); // AnimationTrack requires an Animator, not just a matching GameObject.
+            var comp = MultiTrackComp(null);
+
+            var plan = BindingPlan.Build(comp, SceneManager.GetActiveScene());
+
+            var body = plan.requirements.Single(r => r.trackName == "Body");
+            Assert.IsFalse(body.Resolved);
+            Assert.IsFalse(body.resolvedBySceneName);
+            Assert.AreEqual("Body", body.suggestedKey);
+        }
+
+        [Test]
+        public void Build_WithActiveScene_OverrideUsesBareBindingKeyForSceneActor()
+        {
+            var hero = Actor("hero");
+            var animator = hero.AddComponent<Animator>();
+            var audio = hero.AddComponent<AudioSource>();
+            var comp = MultiTrackComp(null, bindingKey: "hero");
+
+            var plan = BindingPlan.Build(comp, SceneManager.GetActiveScene());
+
+            Assert.AreEqual(3, plan.Bound);
+            Assert.AreEqual(3, plan.SceneBound);
+            Assert.AreSame(animator, plan.requirements.Single(r => r.trackName == "Body").target);
+            Assert.AreSame(audio, plan.requirements.Single(r => r.trackName == "Voice").target);
+            Assert.AreSame(hero, plan.requirements.Single(r => r.trackName == "Prop").target);
+            Assert.IsTrue(plan.requirements.All(r => r.resolvedKey == "hero"));
+        }
+
+        [Test]
+        public void Build_WithActiveScene_ManifestTargetStillTakesPriority()
+        {
+            var manifestAnimator = Actor("ManifestHero").AddComponent<Animator>();
+            Actor("Body").AddComponent<Animator>();
+            var comp = MultiTrackComp(Manifest(("Body", manifestAnimator)));
+
+            var plan = BindingPlan.Build(comp, SceneManager.GetActiveScene());
+
+            var body = plan.requirements.Single(r => r.trackName == "Body");
+            Assert.AreSame(manifestAnimator, body.target);
+            Assert.IsFalse(body.resolvedBySceneName);
+            Assert.AreEqual("Body", body.resolvedKey);
         }
     }
 }

@@ -48,7 +48,8 @@ namespace TimelineSmash.Editor
                 if (track == null)
                     continue;
 
-                Object target = Resolve(bindings, segment, track, scene, out string key);
+                Object target = Resolve(bindings, segment, track, scene, out string key,
+                    out _);
 
                 if (track is ControlTrack control)
                 {
@@ -98,11 +99,15 @@ namespace TimelineSmash.Editor
             }
         }
 
-        /// <summary>Resolve a track's binding target. <paramref name="key"/> returns the key that resolved,
-        /// or — when nothing resolves — the recommended key to author.</summary>
-        static Object Resolve(CompiledBindings bindings, SubTimelineSegment segment, TrackAsset track,
-            Scene scene, out string key)
+        /// <summary>Resolve a track exactly as stage binding does. <paramref name="key"/> returns the
+        /// manifest key or scene-object name that resolved, or — when nothing resolves — the recommended
+        /// key to author. Exposed internally so editor diagnostics can preview the same
+        /// manifest-first, scene-name-second result instead of reporting a false negative for actors already
+        /// present in the active scene.</summary>
+        internal static Object Resolve(CompiledBindings bindings, SubTimelineSegment segment, TrackAsset track,
+            Scene scene, out string key, out bool resolvedBySceneName)
         {
+            resolvedBySceneName = false;
             string first = null;
             foreach (var candidate in CandidateKeys(segment, track.name))
             {
@@ -133,7 +138,14 @@ namespace TimelineSmash.Editor
             if (scene.IsValid())
             {
                 bool hasOverride = segment != null && !string.IsNullOrEmpty(segment.bindingKey);
-                return FindInScene(scene, hasOverride ? segment.bindingKey : track.name, track);
+                string sceneName = hasOverride ? segment.bindingKey : track.name;
+                var sceneTarget = FindInScene(scene, sceneName, track);
+                if (sceneTarget != null)
+                {
+                    key = sceneName;
+                    resolvedBySceneName = true;
+                }
+                return sceneTarget;
             }
             return null;
         }

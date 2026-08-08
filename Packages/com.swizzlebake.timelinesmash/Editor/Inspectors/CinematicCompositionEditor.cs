@@ -5,6 +5,7 @@ using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEditor.Timeline;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using UnityEngine.Timeline;
 
 namespace TimelineSmash.Editor
@@ -239,19 +240,33 @@ namespace TimelineSmash.Editor
 
         void DrawBindings(CinematicComposition comp)
         {
-            var plan = BindingPlan.Build(comp);
+            var activeScene = SceneManager.GetActiveScene();
+            var plan = BindingPlan.Build(comp, activeScene);
+            string activeSceneName = activeScene.IsValid() && !string.IsNullOrEmpty(activeScene.name)
+                ? activeScene.name
+                : "Untitled";
 
             EditorGUILayout.Space();
             using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
             {
                 EditorGUILayout.LabelField(
-                    plan.Total == 0 ? "Bindings — no bindable tracks" : $"Bindings — {plan.Bound} of {plan.Total} bound",
+                    plan.Total == 0
+                        ? "Bindings — no bindable tracks"
+                        : $"Bindings — {plan.Bound} of {plan.Total} resolvable",
                     EditorStyles.boldLabel);
+
+                if (plan.SceneBound > 0)
+                    EditorGUILayout.LabelField(
+                        $"{plan.SceneBound} resolved by name in active scene '{activeSceneName}'",
+                        EditorStyles.miniLabel);
 
                 if (comp.bindingManifest == null)
                 {
                     EditorGUILayout.HelpBox(
-                        "No binding manifest assigned. Create one to map track names to shared scene actors.",
+                        plan.SceneBound > 0
+                            ? "No binding manifest assigned. Green scene-name matches work when assembling " +
+                              "into this scene; create a manifest if the bindings must travel with another stage."
+                            : "No binding manifest assigned. Create one to map track names to shared scene actors.",
                         MessageType.Info);
                     if (GUILayout.Button("Create & assign manifest"))
                     {
@@ -278,7 +293,9 @@ namespace TimelineSmash.Editor
                             EditorStyles.miniLabel, GUILayout.MinWidth(120));
                         GUILayout.FlexibleSpace();
                         GUILayout.Label(
-                            r.Resolved ? $"→ {TargetName(r.target)}  key '{r.resolvedKey}'"
+                            r.Resolved ? r.resolvedBySceneName
+                                           ? $"→ {TargetName(r.target)}  active scene name '{r.resolvedKey}'"
+                                           : $"→ {TargetName(r.target)}  manifest key '{r.resolvedKey}'"
                                        : $"needs key '{r.suggestedKey}'",
                             EditorStyles.miniLabel);
                     }
@@ -292,10 +309,11 @@ namespace TimelineSmash.Editor
                     AddMissingKeys(comp, plan);
 
                 EditorGUILayout.HelpBox(
-                    "A track binds to the manifest key matching its name. To reuse one sub-timeline for " +
-                    "different actors, set a per-segment Binding Key and add keys like '<key>/<trackName>'. " +
-                    "Or name a scene object after a track and use Assemble Into Active Scene to bind without " +
-                    "a manifest entry.",
+                    "Green checks identify either a manifest target or a compatible object found by name in " +
+                    $"the active scene '{activeSceneName}'. Active-scene matches apply when using Assemble " +
+                    "Into Active Scene, or when the generated stage contains the same named actors. To reuse " +
+                    "one sub-timeline for different actors, set a per-segment Binding Key and add manifest " +
+                    "keys like '<key>/<trackName>'.",
                     MessageType.None);
 
                 if (plan.warnings.Count > 0)

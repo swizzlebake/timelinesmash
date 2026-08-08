@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using UnityEngine.Timeline;
 
 namespace TimelineSmash.Editor
@@ -25,6 +26,7 @@ namespace TimelineSmash.Editor
             public string resolvedKey;       // the manifest key that resolved, or null
             public Object target;            // the resolved manifest target, or null
             public string suggestedKey;      // the recommended key to author when unresolved
+            public bool resolvedBySceneName; // true when the active scene supplied the target by object name
 
             public bool Resolved => target != null;
 
@@ -38,10 +40,20 @@ namespace TimelineSmash.Editor
         public int Total => requirements.Count;
         public int Bound => requirements.Count(r => r.Resolved);
         public int Missing => Total - Bound;
+        public int SceneBound => requirements.Count(r => r.resolvedBySceneName);
 
         /// <summary>Build the plan from a composition: flatten the tree, compile the manifest, and resolve
         /// each output track that needs a binding against the same candidate keys the runtime applier uses.</summary>
         public static BindingPlan Build(CinematicComposition composition)
+        {
+            return Build(composition, default, false);
+        }
+
+        /// <summary>Build the plan and optionally preview name-based binding against a scene. Manifest
+        /// entries retain priority, exactly as they do during stage assembly. A scene match counts only
+        /// when the named GameObject contains the component type required by the Timeline track.</summary>
+        public static BindingPlan Build(CinematicComposition composition, Scene scene,
+            bool resolveBySceneName = true)
         {
             var plan = new BindingPlan();
             if (composition == null)
@@ -66,20 +78,16 @@ namespace TimelineSmash.Editor
                     if (!isControl && bindingType == null)
                         continue; // this track needs no binding (e.g. a PlayableTrack)
 
-                    string resolvedKey = null;
-                    Object target = null;
-                    string first = null;
+                    string suggestedKey = null;
                     foreach (var candidate in BindingApplier.CandidateKeys(leaf.segment, track.name))
                     {
-                        first ??= candidate;
-                        var t = compiled.Resolve(candidate);
-                        if (t != null)
-                        {
-                            resolvedKey = candidate;
-                            target = t;
-                            break;
-                        }
+                        suggestedKey = candidate;
+                        break;
                     }
+
+                    var target = BindingApplier.Resolve(compiled, leaf.segment, track,
+                        resolveBySceneName ? scene : default, out string resolvedKey,
+                        out bool resolvedBySceneName);
 
                     plan.requirements.Add(new Requirement
                     {
@@ -91,7 +99,8 @@ namespace TimelineSmash.Editor
                         isControl = isControl,
                         resolvedKey = resolvedKey,
                         target = target,
-                        suggestedKey = first ?? track.name,
+                        suggestedKey = suggestedKey ?? track.name,
+                        resolvedBySceneName = resolvedBySceneName,
                     });
                 }
             }
