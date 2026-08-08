@@ -39,9 +39,13 @@ Or add to `Packages/manifest.json`:
 "com.swizzlebake.timelinesmash": "https://github.com/swizzlebake/timelinesmash.git?path=Packages/com.swizzlebake.timelinesmash"
 ```
 
-Pin a version by appending a git tag, e.g. `#0.12.0`. Requires Unity **6000.3+** and
-`com.unity.timeline` **1.8.12+**; `com.unity.recorder` is optional and enables video / image-sequence
+Pin a version by appending a git tag, e.g. `#0.14.0`. Requires Unity **2021.3 LTS+** and
+`com.unity.timeline` **1.6.1+**; `com.unity.recorder` is optional and enables video / image-sequence
 export.
+
+Two Package Manager samples are included: a minimal **Two-Artist Demo** recipe and a prebuilt,
+45-second **Four-Artist Cinematic** with isolated artist folders, 16 segments, nested composition,
+composable bindings, audio, signals and spawned prefabs.
 
 ## Concepts
 

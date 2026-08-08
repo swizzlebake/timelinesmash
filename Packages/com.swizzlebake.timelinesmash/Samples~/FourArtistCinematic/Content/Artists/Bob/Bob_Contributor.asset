@@ -1,0 +1,52 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 471cb42e61468cc56a9a2ce36d7b3232, type: 3}
+  m_Name: Bob_Contributor
+  m_EditorClassIdentifier: TimelineSmash.Runtime::TimelineSmash.ContributorSegmentSet
+  owner: "Bob \u2014 Camera & Edit"
+  segments:
+  - subTimeline: {fileID: 11400000, guid: 983a001821637f2d5bd582214ac527b6, type: 2}
+    subComposition: {fileID: 0}
+    laneName: Camera
+    bindingKey: camera
+    start: 0
+    duration: 10
+    clipIn: 0
+    speed: 1
+    spawnPrefab: {fileID: 0}
+  - subTimeline: {fileID: 11400000, guid: fc994c3d5e1596f68b5ec6e385f01938, type: 2}
+    subComposition: {fileID: 0}
+    laneName: Camera
+    bindingKey: camera
+    start: 10
+    duration: 11
+    clipIn: 0.5
+    speed: 1
+    spawnPrefab: {fileID: 0}
+  - subTimeline: {fileID: 11400000, guid: 7ba8749dc9c4d536987f75e841401367, type: 2}
+    subComposition: {fileID: 0}
+    laneName: Camera
+    bindingKey: camera
+    start: 21
+    duration: 12
+    clipIn: 1
+    speed: 0.9
+    spawnPrefab: {fileID: 0}
+  - subTimeline: {fileID: 11400000, guid: 228f765626114efafbe3a0f55c0cdc2e, type: 2}
+    subComposition: {fileID: 0}
+    laneName: Camera
+    bindingKey: camera
+    start: 33
+    duration: 12
+    clipIn: 0
+    speed: 1
+    spawnPrefab: {fileID: 0}

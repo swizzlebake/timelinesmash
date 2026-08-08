@@ -9,13 +9,34 @@ namespace TimelineSmash.Editor
     public class CompiledBindings
     {
         public readonly Dictionary<string, Object> map = new Dictionary<string, Object>();
+        readonly Dictionary<string, GlobalObjectId> persistentIds = new Dictionary<string, GlobalObjectId>();
         public readonly List<BindingManifest.Entry> orderedEntries = new List<BindingManifest.Entry>();
         public readonly List<string> warnings = new List<string>();
 
         public int Count => map.Count;
 
-        public Object Resolve(string key) =>
-            !string.IsNullOrEmpty(key) && map.TryGetValue(key, out var v) ? v : null;
+        public Object Resolve(string key)
+        {
+            if (string.IsNullOrEmpty(key) || !map.TryGetValue(key, out var value))
+                return null;
+            if (value != null)
+                return value;
+
+            // Opening/saving scenes can fake-null persistent prefab components held in memory. Restore the
+            // target from its stable GUID/file ID so stage building can still remap it to the live instance.
+            if (persistentIds.TryGetValue(key, out var id))
+            {
+                value = GlobalObjectId.GlobalObjectIdentifierToObjectSlow(id);
+                map[key] = value;
+            }
+            return value;
+        }
+
+        internal void RememberPersistentTarget(string key, Object target)
+        {
+            if (!string.IsNullOrEmpty(key) && target != null && EditorUtility.IsPersistent(target))
+                persistentIds[key] = GlobalObjectId.GetGlobalObjectIdSlow(target);
+        }
     }
 
     /// <summary>
@@ -68,6 +89,7 @@ namespace TimelineSmash.Editor
                     }
 
                     compiled.map[e.key] = e.target;
+                    compiled.RememberPersistentTarget(e.key, e.target);
                     compiled.orderedEntries.Add(new BindingManifest.Entry { key = e.key, target = e.target });
                     firstSource[e.key] = m.name;
                 }

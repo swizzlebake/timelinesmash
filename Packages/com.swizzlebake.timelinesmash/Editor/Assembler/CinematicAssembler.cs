@@ -187,6 +187,7 @@ namespace TimelineSmash.Editor
                 result.entries.Add(new SegmentEntry
                 {
                     segment = leaf.segment,
+                    subTimelinePath = AssetDatabase.GetAssetPath(leaf.segment.subTimeline),
                     laneName = lane,
                     laneIndex = 0,
                     globalIndex = gi,

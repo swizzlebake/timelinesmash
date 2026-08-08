@@ -6,7 +6,8 @@ rotation, audio, activation, and signal tracks all flow through `assemble → co
 the bound transforms actually move when evaluated. Three limitations surfaced — **all three are now fixed**
 (see "Gaps found — all three now fixed" below).
 
-> Verified: the new `PlaybackEvaluationTests` pass headlessly alongside the existing suite (57/57) on
+> Verified: the complete EditMode suite passes headlessly (83/83, including the serialized Four-Artist
+> sample import and playback coverage) on
 > Unity 6000.3.10f1. `HostEvaluation_MovesBoundTransform` proves real motion (Transform translates > 0.5u
 > and rotates > 30° when the host director is evaluated); the fix tests prove per-track override retargeting,
 > nested-control wiring, idempotent active-scene assembly, and bind-by-name resolution.

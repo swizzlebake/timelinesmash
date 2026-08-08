@@ -106,10 +106,37 @@ namespace TimelineSmash.Tests
             CollectionAssert.Contains(names, "Alice");
 
             // …and the segment's track bound to its Animator by name, with no manifest.
-            var track = result.entries[0].segment.subTimeline.GetOutputTracks().First();
+            var liveSub = build.hosts[0].playableAsset as TimelineAsset;
+            Assert.IsNotNull(liveSub);
+            var track = liveSub.GetOutputTracks().First();
             var bound = build.hosts[0].GetGenericBinding(track);
             Assert.IsInstanceOf<Animator>(bound);
             Assert.AreEqual("Alice", ((Animator)bound).gameObject.name);
+        }
+
+        [Test]
+        public void BuildStage_WithActorPrefab_RemapManifestPrefabTargetToSceneInstance()
+        {
+            // The track key deliberately differs from the actor name, so only the manifest can resolve it.
+            var result = AssembleNamedActor("hero/Body");
+            var actor = TestAssets.CreatePrefab("Alice", withAnimator: true);
+            var prefabAnimator = actor.GetComponent<Animator>();
+            var manifest = ScriptableObject.CreateInstance<BindingManifest>();
+            manifest.entries.Add(new BindingManifest.Entry { key = "hero/Body", target = prefabAnimator });
+
+            var build = StageSceneBuilder.BuildStage(result, BindingCompiler.Compile(manifest), StagePath, null, actor);
+
+            var liveSub = build.hosts[0].playableAsset as TimelineAsset;
+            Assert.IsNotNull(liveSub);
+            var track = liveSub.GetOutputTracks().First();
+            var bound = build.hosts[0].GetGenericBinding(track) as Animator;
+
+            Assert.IsNotNull(bound);
+            Assert.AreNotSame(prefabAnimator, bound, "The host must not bind to the prefab asset component.");
+            Assert.AreEqual("Alice", bound.gameObject.name);
+            Assert.AreEqual(StagePath, bound.gameObject.scene.path);
+
+            Object.DestroyImmediate(manifest);
         }
 
         [Test]
@@ -131,7 +158,9 @@ namespace TimelineSmash.Tests
             CollectionAssert.Contains(names, "Alice");
             CollectionAssert.Contains(names, "Cinematic_Master");
 
-            var track = result.entries[0].segment.subTimeline.GetOutputTracks().First();
+            var liveSub = build.hosts[0].playableAsset as TimelineAsset;
+            Assert.IsNotNull(liveSub);
+            var track = liveSub.GetOutputTracks().First();
             Assert.IsInstanceOf<Animator>(build.hosts[0].GetGenericBinding(track));
         }
 

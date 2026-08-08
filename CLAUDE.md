@@ -36,6 +36,8 @@ A "conflict" on generated output is resolved by re-assembling, not by hand-mergi
   - `CinematicAssembleService.cs` (paths + orchestration), `GroupingService.cs`, `TimelineSmashMenu.cs`,
     `Inspectors/`, `Overview/CinematicOverviewModel.cs`, `Internal/EditorAssetUtil.cs`,
     `RecorderBridge.cs`.
+  - `Samples/FourArtistCinematicBuilder.cs` — deterministically creates the four-owner Orbital Relay
+    production sample and exposes assemble/reset commands.
   - `Recording/` — optional Recorder export in its own `TimelineSmash.Recorder.Editor` asmdef,
     define-constrained on `TIMELINESMASH_RECORDER` (compiles only when `com.unity.recorder` is present),
     registering itself through `RecorderBridge`.
@@ -82,7 +84,7 @@ Pure-logic tests (flatten, binding compile, grouping) build assets in memory wit
 
 Bump `Packages/com.swizzlebake.timelinesmash/package.json` `version`, add a `CHANGELOG.md` entry, commit,
 then `git tag -a X.Y.Z -m "…"` and push the tag. Consumers pin with `#X.Y.Z` on the git URL. Current
-latest: **0.13.0**. Minimum editor: **Unity 2021.3 LTS** (`com.unity.timeline` ≥ 1.6.1; optional
+latest: **0.14.0**. Minimum editor: **Unity 2021.3 LTS** (`com.unity.timeline` ≥ 1.6.1; optional
 Recorder export needs `com.unity.recorder` ≥ 4.0.0).
 
 ## Git

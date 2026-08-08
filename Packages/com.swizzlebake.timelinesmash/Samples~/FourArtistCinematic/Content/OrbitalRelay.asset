@@ -1,0 +1,34 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 46fc9c52facf8d9778698d6adcd82998, type: 3}
+  m_Name: OrbitalRelay
+  m_EditorClassIdentifier: TimelineSmash.Runtime::TimelineSmash.CinematicComposition
+  cinematicName: OrbitalRelay
+  contributors:
+  - {fileID: 11400000, guid: a191e4a2e1ae7e5c9815b2eed2dd9491, type: 2}
+  - {fileID: 11400000, guid: 49e0debeed07f47bd9ed2c2bf9aa6120, type: 2}
+  - {fileID: 11400000, guid: 382f47fbe26bc3078ad3c66bca080b88, type: 2}
+  - {fileID: 11400000, guid: 3a021393c4139505ab831403c389bf74, type: 2}
+  bindingManifest: {fileID: 11400000, guid: 9f78d6ec405053fe1a274aa6468b0bbb, type: 2}
+  settings:
+    frameRate: 30
+    totalDuration: 45
+  capture:
+    output: 1
+    width: 3840
+    height: 2160
+    format: 0
+    supersample: 1
+    cameraTag: MainCamera
+  outputFolder: Assets/Cinematics/Generated
+  stageActorPrefab: {fileID: 1326486157337179348, guid: 4b596b1090ef304d28a7e97792c6aa4d, type: 3}
+  stageSourceSceneGuid: 43cd84a7688006f32878da6734062de6

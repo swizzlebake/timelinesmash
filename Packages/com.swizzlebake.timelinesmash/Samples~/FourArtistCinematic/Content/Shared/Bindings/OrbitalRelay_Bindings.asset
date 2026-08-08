@@ -1,0 +1,20 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fa69533180a3d95b9a2fe48ab72b6fa9, type: 3}
+  m_Name: OrbitalRelay_Bindings
+  m_EditorClassIdentifier: TimelineSmash.Runtime::TimelineSmash.BindingManifest
+  entries: []
+  includes:
+  - {fileID: 11400000, guid: 8f3dec986627f95aca39db776a9bb66e, type: 2}
+  - {fileID: 11400000, guid: 105926f6fa1a623aea3eca99881511a0, type: 2}
+  - {fileID: 11400000, guid: b6cd32e5dbb6c6aaaa9fcba04aa2300b, type: 2}
+  - {fileID: 11400000, guid: 048bb14e3821f537ab04af30bee84344, type: 2}

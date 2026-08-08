@@ -1,6 +1,6 @@
 {
   "name": "com.swizzlebake.timelinesmash",
-  "version": "0.13.0",
+  "version": "0.14.0",
   "displayName": "TimelineSmash",
   "description": "Collaborative cinematic assembly for Unity Timeline. Each artist authors isolated sub-timelines in their own files; a deterministic assembler bakes them into a native master Timeline (plus a regenerable stage scene) so teams build long, intricate cinematics together without merge conflicts. Bindings to shared scene actors live in a manifest, not in the scene.",
   "unity": "2021.3",
@@ -27,6 +27,11 @@
       "displayName": "Two-Artist Demo",
       "description": "A minimal cinematic assembled from two contributors' sub-timelines with a shared binding manifest.",
       "path": "Samples~/TwoArtistDemo"
+    },
+    {
+      "displayName": "Four-Artist Cinematic",
+      "description": "A prebuilt 45-second production workflow with four isolated contributors, 16 segments, nested composition, composable bindings, audio, signals and spawned prefabs.",
+      "path": "Samples~/FourArtistCinematic"
     }
   ]
 }

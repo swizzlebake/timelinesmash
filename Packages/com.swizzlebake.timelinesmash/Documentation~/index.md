@@ -38,8 +38,17 @@ so the hand-edited working scene never carries merge-prone director/binding wiri
 ## Bindings
 
 Keys default to **track name**: a sub-timeline track named `HeroCam` binds to the manifest entry
-`HeroCam`. Override per segment with `bindingKey` (applies to all of that segment's tracks — handy
-for single-track shots). Unresolved keys produce warnings, not errors.
+`HeroCam`. With a segment `bindingKey`, TimelineSmash tries `<bindingKey>/<trackName>` first and then the
+bare key, allowing both per-track retargeting and whole-sub-timeline fallback. A root manifest can include
+artist-owned child manifests. Persistent targets inside a stage-actor prefab are remapped to their live
+scene instances during stage assembly. Unresolved keys produce warnings, not errors.
+
+## Samples
+
+- **Two-Artist Demo** is the shortest hand-built introduction.
+- **Four-Artist Cinematic — Orbital Relay** is a prebuilt 45-second production example with four isolated
+  contributor trees, 16 flattened segments, seven lanes, a nested namespaced finale, composable manifests,
+  audio, signals and spawned prefabs. Its collaboration guide includes a four-branch merge rehearsal.
 
 ## Recording (optional)
 
@@ -59,5 +68,5 @@ without it — open the stage scene and press Play.
 
 EditMode tests under `Tests/Editor` cover flatten/sort determinism, master generation (lanes,
 clips, timing, edge cases), the overview model (overlaps/gaps), stage building (host count and
-exposed-reference resolution), and binding resolution. Run them from the Test Runner or headlessly
-with `-runTests -testPlatform EditMode`.
+exposed-reference resolution), binding resolution, real host playback, and import/assembly of the serialized
+Four-Artist sample. Run them from the Test Runner or headlessly with `-runTests -testPlatform EditMode`.

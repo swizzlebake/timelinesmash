@@ -23,8 +23,8 @@ manifest, and generate the master deterministically.
 
 ## Requirements
 
-- Unity **6000.3** or newer
-- `com.unity.timeline` **1.8.12+** (declared as a dependency)
+- Unity **2021.3 LTS** or newer
+- `com.unity.timeline` **1.6.1+** (declared as a dependency)
 - *(optional)* `com.unity.recorder` — enables the **Record** button for video / image-sequence export
 
 ## Install (git URL)
@@ -41,7 +41,14 @@ Or add to `Packages/manifest.json`:
 "com.swizzlebake.timelinesmash": "https://github.com/swizzlebake/timelinesmash.git?path=Packages/com.swizzlebake.timelinesmash"
 ```
 
-To pin a version, append `#0.1.0` (a git tag) to the URL.
+To pin a version, append `#0.14.0` (a git tag) to the URL.
+
+## Samples
+
+- **Two-Artist Demo** — a minimal hand-built recipe for learning the asset model.
+- **Four-Artist Cinematic** — a prebuilt 45-second production example with four isolated ownership trees,
+  16 segments, nested composition, composable bindings, audio, signals and spawned prefabs. Import it from
+  the Package Manager Samples tab, then follow its README.
 
 ## Concepts
 

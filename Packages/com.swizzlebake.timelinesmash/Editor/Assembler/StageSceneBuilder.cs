@@ -96,7 +96,14 @@ namespace TimelineSmash.Editor
                 hostGO.transform.SetParent(masterGO.transform);
 
                 var hostDir = hostGO.AddComponent<PlayableDirector>();
-                hostDir.playableAsset = entry.segment.subTimeline;
+                // Scene creation/opening can reimport Timeline assets and fake-null references held by the
+                // assembled result. Reload every source timeline by path just as we do for the master, so
+                // the host and BindingApplier always operate on the live asset instance.
+                var sourceTimeline = entry.segment.subTimeline;
+                var liveTimeline = !string.IsNullOrEmpty(entry.subTimelinePath)
+                    ? AssetDatabase.LoadAssetAtPath<TimelineAsset>(entry.subTimelinePath)
+                    : null;
+                hostDir.playableAsset = liveTimeline ?? sourceTimeline;
                 hostDir.playOnAwake = false;
                 build.hosts.Add(hostDir);
 

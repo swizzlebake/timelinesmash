@@ -11,6 +11,7 @@ namespace TimelineSmash.Editor
     public class SegmentEntry
     {
         public SubTimelineSegment segment;
+        public string subTimelinePath; // captured before scene operations can stale the source reference
         public string laneName;
         public int laneIndex;       // 0-based lane order (first appearance in the sorted list)
         public int globalIndex;     // index in the flattened, sorted segment list

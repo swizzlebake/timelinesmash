@@ -1,0 +1,43 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 471cb42e61468cc56a9a2ce36d7b3232, type: 3}
+  m_Name: DevFinale_Contributor
+  m_EditorClassIdentifier: TimelineSmash.Runtime::TimelineSmash.ContributorSegmentSet
+  owner: "Dev \u2014 Finale Group"
+  segments:
+  - subTimeline: {fileID: 11400000, guid: 00ee349e11c30dca08b36a8930859af8, type: 2}
+    subComposition: {fileID: 0}
+    laneName: Satellite
+    bindingKey: satellite
+    start: 0
+    duration: 15
+    clipIn: 0
+    speed: 1.2
+    spawnPrefab: {fileID: 0}
+  - subTimeline: {fileID: 11400000, guid: 38089f568474d9bbf88d64383b6f8b21, type: 2}
+    subComposition: {fileID: 0}
+    laneName: Lighting
+    bindingKey: dev
+    start: 2
+    duration: 13
+    clipIn: 0
+    speed: 1
+    spawnPrefab: {fileID: 0}
+  - subTimeline: {fileID: 11400000, guid: 935c5fb7fec1f8a7f9fd40e896a80c56, type: 2}
+    subComposition: {fileID: 0}
+    laneName: Audio
+    bindingKey: dev
+    start: 0
+    duration: 15
+    clipIn: 0
+    speed: 1
+    spawnPrefab: {fileID: 0}

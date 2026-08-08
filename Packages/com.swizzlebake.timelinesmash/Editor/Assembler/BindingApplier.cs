@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using UnityEditor;
 using UnityEngine;
 using UnityEngine.Playables;
 using UnityEngine.SceneManagement;
@@ -33,7 +34,9 @@ namespace TimelineSmash.Editor
             if (hostDir == null || segment == null)
                 return 0;
 
-            var sub = segment.subTimeline;
+            // The host's playable is authoritative. Stage creation can reimport a TimelineAsset and leave
+            // the segment holding Unity's fake-null/stale instance even though the live asset is loaded.
+            var sub = hostDir.playableAsset as TimelineAsset ?? segment.subTimeline;
             if (sub == null)
                 return 0;
 
@@ -108,6 +111,19 @@ namespace TimelineSmash.Editor
                 if (t != null)
                 {
                     key = candidate;
+                    // A manifest can safely reference a component/GameObject inside the composition's
+                    // stage-actor prefab. Once that prefab is instantiated into the generated stage,
+                    // remap the persistent asset reference to its same-named live scene instance. This
+                    // keeps the manifest serializable while ensuring playback never binds to prefab data.
+                    if (scene.IsValid() && EditorUtility.IsPersistent(t))
+                    {
+                        string sceneName = t is Component component
+                            ? component.gameObject.name
+                            : (t as GameObject)?.name;
+                        var live = FindInScene(scene, sceneName, track);
+                        if (live != null)
+                            return live;
+                    }
                     return t;
                 }
             }

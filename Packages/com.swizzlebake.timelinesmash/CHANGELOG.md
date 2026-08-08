@@ -4,6 +4,23 @@ All notable changes to this package are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.14.0] - 2026-08-08
+
+### Added
+- **Four-Artist Cinematic sample.** A prebuilt, 45-second `OrbitalRelay` composition demonstrates four
+  isolated ownership trees, 16 flattened segments across seven lanes, composable artist manifests,
+  per-track retargeting, nested namespaced composition, clip-in/speed changes, WAV audio, signals,
+  ActivationTracks and spawned prefabs. Its collaboration guide includes a four-branch merge rehearsal.
+- A deterministic sample builder plus assemble/reset menu commands, and an end-to-end EditMode test that
+  validates ownership, flattening, bindings, regeneration and real host playback.
+
+### Fixed
+- Stage building now captures each sub-timeline's asset path during assembly and reloads the live instance
+  after scene operations, preventing fake-null host timelines and missing prefab/source-scene bindings.
+- Manifest targets that point into the stage actor prefab are remapped to the corresponding live scene
+  instance before binding.
+- Recorder's minimum-version expression now uses Unity's valid `4.0.0` shorthand.
+
 ## [0.13.0] - 2026-06-27
 
 ### Changed
@@ -19,8 +36,9 @@ All notable changes to this package are documented here. The format is based on
 - **Optional Recorder export no longer breaks compilation on older Recorder.** The export assembly's
   `versionDefines` expression was empty, so `TIMELINESMASH_RECORDER` switched on for *any* installed
   Recorder — but the export code uses the scripted ProRes `Encoder` API (`ProResEncoderSettings`) that
-  only exists in **Recorder 4.0.0+**. The expression is now `[4.0.0,)`, so on Recorder 3.x the export
-  path is cleanly absent (as an optional feature should be) instead of a hard compile error.
+  only exists in **Recorder 4.0.0+**. The expression is now `4.0.0`, so on Recorder 3.x the export
+  path is cleanly absent (as an optional feature should be) instead of a hard compile error. The minimum
+  expression uses Unity's `4.0.0` shorthand (equivalent to version 4.0.0 or later).
 
 ## [0.12.0] - 2026-06-26
 
