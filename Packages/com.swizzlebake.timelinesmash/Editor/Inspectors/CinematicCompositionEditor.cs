@@ -32,7 +32,9 @@ namespace TimelineSmash.Editor
                 EditorGUILayout.LabelField("Author", EditorStyles.boldLabel);
                 using (new EditorGUILayout.HorizontalScope())
                 {
-                    if (GUILayout.Button("Add contributor"))
+                    if (GUILayout.Button(new GUIContent("Add contributor",
+                        "Create a ContributorSegmentSet asset next to this composition, append it to " +
+                        "Contributors and select it. One set per artist keeps files one-owner and merge-safe.")))
                     {
                         var set = CinematicScaffold.AddContributor(comp, "New Artist");
                         if (set != null)
@@ -41,7 +43,9 @@ namespace TimelineSmash.Editor
                             EditorGUIUtility.PingObject(set);
                         }
                     }
-                    if (GUILayout.Button("Open visual timeline"))
+                    if (GUILayout.Button(new GUIContent("Open visual timeline",
+                        "Open the Cinematic Timeline window: a lane-per-contributor view of this " +
+                        "composition where segments can be inspected and rearranged.")))
                         CinematicTimelineWindow.Open(comp);
                 }
             }
@@ -52,25 +56,38 @@ namespace TimelineSmash.Editor
 
                 DrawStageSource(comp);
 
-                if (GUILayout.Button("Assemble (master + stage)", GUILayout.Height(26)))
+                if (GUILayout.Button(new GUIContent("Assemble (master + stage)",
+                        "Regenerate the master timeline and the stage scene in the output folder. " +
+                        "The stage hosts the master plus per-segment directors, ready to play or record."),
+                        GUILayout.Height(26)))
                     Report(CinematicAssembleService.Assemble(comp, true));
 
-                if (GUILayout.Button("Assemble into active scene"))
+                if (GUILayout.Button(new GUIContent("Assemble into active scene",
+                        "Regenerate the master timeline and host it in the currently open scene instead " +
+                        "of a generated stage, binding tracks to this scene's actors by name.")))
                     Report(CinematicAssembleService.AssembleIntoActiveScene(comp));
 
                 using (new EditorGUILayout.HorizontalScope())
                 {
-                    if (GUILayout.Button("Master only"))
+                    if (GUILayout.Button(new GUIContent("Master only",
+                        "Regenerate just the master timeline asset, leaving any existing stage scene untouched.")))
                         Report(CinematicAssembleService.Assemble(comp, false));
-                    if (GUILayout.Button("Open Master"))
+                    if (GUILayout.Button(new GUIContent("Open Master",
+                        "Show the generated master timeline in the Timeline window. Assemble first if it " +
+                        "does not exist yet.")))
                         OpenMaster(comp);
-                    if (GUILayout.Button("Open Stage"))
+                    if (GUILayout.Button(new GUIContent("Open Stage",
+                        "Open the generated stage scene (prompting to save current changes). Assemble " +
+                        "(master + stage) first if it does not exist yet.")))
                         OpenStage(comp);
                 }
 
                 if (RecorderBridge.Available)
                 {
-                    if (GUILayout.Button("Record cinematic"))
+                    if (GUILayout.Button(new GUIContent("Record cinematic",
+                        "Open the generated stage scene, enter Play Mode and capture the cinematic using " +
+                        "the Capture settings above (image sequence and/or video via Unity Recorder). " +
+                        "Requires Assemble (master + stage) first.")))
                     {
                         RecorderBridge.RecordAction(
                             comp,
@@ -268,7 +285,9 @@ namespace TimelineSmash.Editor
                               "into this scene; create a manifest if the bindings must travel with another stage."
                             : "No binding manifest assigned. Create one to map track names to shared scene actors.",
                         MessageType.Info);
-                    if (GUILayout.Button("Create & assign manifest"))
+                    if (GUILayout.Button(new GUIContent("Create & assign manifest",
+                        "Create a BindingManifest asset next to this composition and assign it to the " +
+                        "Binding Manifest field, ready to map track keys to shared scene actors.")))
                     {
                         CreateAndAssignManifest(comp);
                         return;
@@ -305,7 +324,9 @@ namespace TimelineSmash.Editor
                     .Where(r => !r.Resolved).Select(r => r.suggestedKey).Distinct()
                     .Count(k => !existingKeys.Contains(k));
 
-                if (toAdd > 0 && GUILayout.Button($"Add {toAdd} missing key(s) to manifest"))
+                if (toAdd > 0 && GUILayout.Button(new GUIContent($"Add {toAdd} missing key(s) to manifest",
+                        "Append the unresolved keys listed above to the binding manifest with empty " +
+                        "targets, so they only need their scene actors assigned.")))
                     AddMissingKeys(comp, plan);
 
                 EditorGUILayout.HelpBox(

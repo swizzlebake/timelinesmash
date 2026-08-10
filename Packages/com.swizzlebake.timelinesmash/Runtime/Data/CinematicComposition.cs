@@ -23,6 +23,7 @@ namespace TimelineSmash
         [Tooltip("Resolves logical binding keys to shared scene actors at assemble time.")]
         public BindingManifest bindingManifest;
 
+        [Tooltip("How the master timeline is baked: frame rate and total recording duration.")]
         public AssembleSettings settings = new AssembleSettings();
 
         [Tooltip("High-resolution capture settings used by Record (image sequence).")]
